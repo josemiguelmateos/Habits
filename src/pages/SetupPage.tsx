@@ -7,7 +7,7 @@ export function SetupPage() {
     <div className="flex min-h-dvh flex-col items-center justify-center px-6">
       <div className="w-full max-w-md animate-fade-up">
         <p className="font-display text-xs font-semibold uppercase tracking-[0.25em] text-accent">
-          Rutina — configuración
+          Habits — configuración
         </p>
         <h1 className="mt-3 font-display text-2xl font-bold tracking-tight">
           Falta conectar Supabase

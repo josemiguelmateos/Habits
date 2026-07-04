@@ -5,6 +5,7 @@ import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupPage } from './pages/auth/SignupPage'
 import { HomePage } from './pages/HomePage'
+import { WorkoutPage } from './pages/WorkoutPage'
 import { RoutinePage } from './pages/RoutinePage'
 import { CalendarPage } from './pages/CalendarPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -22,6 +23,8 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registro" element={<SignupPage />} />
           <Route element={<ProtectedRoute />}>
+            {/* Modo entrenamiento: pantalla completa, sin nav inferior */}
+            <Route path="/entrenar" element={<WorkoutPage />} />
             <Route element={<AppShell />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/rutina" element={<RoutinePage />} />

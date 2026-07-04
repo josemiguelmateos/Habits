@@ -49,7 +49,7 @@ export function SignupPage() {
     <div className="flex min-h-dvh flex-col justify-center px-6 py-10">
       <div className="mx-auto w-full max-w-sm animate-fade-up">
         <p className="font-display text-xs font-semibold uppercase tracking-[0.25em] text-accent">
-          Rutina
+          Habits
         </p>
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">
           Crea tu cuenta.
