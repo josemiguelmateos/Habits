@@ -56,6 +56,16 @@ export interface SetLog {
   peso_usado: number | null
 }
 
+/** Registro por ejercicio y fecha (kg reales del día + nota). Migración 0003. */
+export interface ExerciseDayLog {
+  id: string
+  user_id: string
+  exercise_id: string
+  fecha: string
+  peso: number | null
+  notas: string | null
+}
+
 export interface DailyLog {
   id: string
   user_id: string

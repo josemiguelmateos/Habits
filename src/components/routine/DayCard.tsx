@@ -30,6 +30,8 @@ interface Props {
   onAdd: (day: RoutineDay) => void
   onCreateDay: (weekday: number) => void
   onPesoChanged: () => void
+  onOpenCardio: (c: CardioSession) => void
+  onAddCardio: (weekday: number) => void
 }
 
 export function DayCard({
@@ -43,6 +45,8 @@ export function DayCard({
   onAdd,
   onCreateDay,
   onPesoChanged,
+  onOpenCardio,
+  onAddCardio,
 }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -89,11 +93,11 @@ export function DayCard({
       </header>
 
       {esDescanso ? (
-        <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
           <p className="text-sm text-zinc-500">
             {weekday === 7 ? 'Descanso total. Recupera.' : 'Sin entrenamiento asignado.'}
           </p>
-          {weekday !== 7 && (
+          <div className="flex shrink-0 gap-3">
             <button
               type="button"
               onClick={() => onCreateDay(weekday)}
@@ -101,7 +105,14 @@ export function DayCard({
             >
               Añadir entrenamiento
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => onAddCardio(weekday)}
+              className="text-xs font-semibold text-zinc-500 hover:text-accent"
+            >
+              + Cardio
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -137,16 +148,18 @@ export function DayCard({
             </p>
           )}
           {cardio.map((c) => (
-            <div
+            <button
               key={c.id}
-              className="flex items-center gap-3 border-t border-ink-border/60 bg-ink-soft/60 px-5 py-3.5"
+              type="button"
+              onClick={() => onOpenCardio(c)}
+              className="flex w-full items-center gap-3 border-t border-ink-border/60 bg-ink-soft/60 px-5 py-3.5 text-left transition-colors hover:bg-ink-raised/60"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 12h3l2.5-5 4 10 2.5-5h6" />
                 </svg>
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-zinc-200">
                   Cardio · {c.tipo ?? '—'} · {c.duracion_min ?? '—'} min
                 </p>
@@ -154,8 +167,20 @@ export function DayCard({
                   {[c.momento, c.metodo, c.zona_velocidad].filter(Boolean).join(' · ')}
                 </p>
               </div>
-            </div>
+              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-zinc-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m9 6 6 6-6 6" />
+              </svg>
+            </button>
           ))}
+          <div className="flex justify-end border-t border-ink-border/40 px-5 py-2">
+            <button
+              type="button"
+              onClick={() => onAddCardio(weekday)}
+              className="text-xs font-semibold text-zinc-600 transition-colors hover:text-accent"
+            >
+              + Cardio
+            </button>
+          </div>
         </>
       )}
     </section>

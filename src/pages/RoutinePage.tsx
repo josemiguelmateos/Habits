@@ -5,11 +5,15 @@ import { useRoutine } from '../hooks/useRoutine'
 import { importInitialRoutine } from '../lib/importRoutine'
 import { supabase } from '../lib/supabase'
 import { isoWeekday } from '../lib/days'
-import type { RoutineDay, RoutineItem } from '../types'
+import type { CardioSession, RoutineDay, RoutineItem } from '../types'
 import { Button } from '../components/ui/Button'
 import { DayCard } from '../components/routine/DayCard'
 import { ExerciseSheet } from '../components/routine/ExerciseSheet'
 import { AddExerciseSheet } from '../components/routine/AddExerciseSheet'
+import { ImportJsonSheet } from '../components/routine/ImportJsonSheet'
+import { CardioSheet } from '../components/routine/CardioSheet'
+
+const BLANK_KEY = 'habits:empezar-en-blanco'
 
 export function RoutinePage() {
   const { user } = useAuth()
@@ -19,6 +23,10 @@ export function RoutinePage() {
   const [anadiendoA, setAnadiendoA] = useState<RoutineDay | null>(null)
   const [importando, setImportando] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const [jsonAbierto, setJsonAbierto] = useState(false)
+  const [cardioEdit, setCardioEdit] = useState<CardioSession | null>(null)
+  const [cardioNuevoDia, setCardioNuevoDia] = useState<number | null>(null)
+  const [enBlanco, setEnBlanco] = useState(() => localStorage.getItem(BLANK_KEY) === '1')
 
   const hoy = isoWeekday()
 
@@ -62,30 +70,52 @@ export function RoutinePage() {
     )
   }
 
-  const sinRutina = rutina.days.length === 0 && rutina.exercises.length === 0
+  const sinRutina =
+    rutina.days.length === 0 && rutina.exercises.length === 0 && rutina.cardio.length === 0
 
-  if (sinRutina) {
+  if (sinRutina && !enBlanco) {
     return (
-      <div className="card flex animate-fade-up flex-col items-center gap-5 px-6 py-12 text-center">
-        <div>
-          <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            Empieza aquí
-          </p>
-          <h2 className="mt-2 font-display text-xl font-semibold">Tu rutina, lista en un toque</h2>
-          <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-zinc-500">
-            Importa tu rutina completa (5 días de pesas, cardio de lunes y sábado, 38
-            ejercicios) o empieza en blanco añadiendo entrenamientos a cada día.
-          </p>
+      <>
+        <div className="card flex animate-fade-up flex-col items-center gap-5 px-6 py-12 text-center">
+          <div>
+            <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+              Empieza aquí
+            </p>
+            <h2 className="mt-2 font-display text-xl font-semibold">Monta tu rutina</h2>
+            <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-zinc-500">
+              Importa la rutina de ejemplo (5 días de pesas + cardio, 38 ejercicios),
+              pega la tuya en JSON o construye la tuya desde cero.
+            </p>
+          </div>
+          <div className="flex w-full max-w-xs flex-col gap-2.5">
+            <Button onClick={() => void importar()} disabled={importando}>
+              {importando ? 'Importando…' : 'Importar rutina de ejemplo'}
+            </Button>
+            <Button variant="secondary" onClick={() => setJsonAbierto(true)}>
+              Pegar mi rutina (JSON)
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                localStorage.setItem(BLANK_KEY, '1')
+                setEnBlanco(true)
+              }}
+            >
+              Empezar en blanco
+            </Button>
+          </div>
+          {importError && (
+            <p className="rounded-xl border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+              {importError}
+            </p>
+          )}
         </div>
-        <Button onClick={() => void importar()} disabled={importando} className="w-full max-w-xs">
-          {importando ? 'Importando…' : 'Importar mi rutina'}
-        </Button>
-        {importError && (
-          <p className="rounded-xl border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-300">
-            {importError}
-          </p>
-        )}
-      </div>
+        <ImportJsonSheet
+          open={jsonAbierto}
+          onClose={() => setJsonAbierto(false)}
+          onChanged={() => void rutina.reload()}
+        />
+      </>
     )
   }
 
@@ -93,6 +123,21 @@ export function RoutinePage() {
 
   return (
     <div className="flex animate-fade-up flex-col gap-4">
+      {sinRutina && (
+        <div className="card flex items-center justify-between px-5 py-3.5">
+          <p className="text-sm text-zinc-500">Rutina en blanco.</p>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem(BLANK_KEY)
+              setEnBlanco(false)
+            }}
+            className="text-xs font-semibold text-accent hover:text-accent-bright"
+          >
+            Importar una rutina
+          </button>
+        </div>
+      )}
       {/* Biblioteca de demostraciones */}
       <div className="card px-5 py-4">
         <div className="flex items-center justify-between">
@@ -170,6 +215,8 @@ export function RoutinePage() {
             onAdd={setAnadiendoA}
             onCreateDay={(w) => void crearDia(w)}
             onPesoChanged={() => void rutina.reload()}
+            onOpenCardio={setCardioEdit}
+            onAddCardio={setCardioNuevoDia}
           />
         )
       })}
@@ -193,6 +240,15 @@ export function RoutinePage() {
           anadiendoA ? (rutina.itemsByDay.get(anadiendoA.id)?.length ?? 0) + 1 : 1
         }
         onClose={() => setAnadiendoA(null)}
+        onChanged={() => void rutina.reload()}
+      />
+      <CardioSheet
+        cardio={cardioEdit}
+        nuevoWeekday={cardioNuevoDia}
+        onClose={() => {
+          setCardioEdit(null)
+          setCardioNuevoDia(null)
+        }}
         onChanged={() => void rutina.reload()}
       />
     </div>
