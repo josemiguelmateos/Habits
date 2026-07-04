@@ -1,0 +1,122 @@
+{
+  "objetivo": "Hipertrofia",
+  "mes": "Febrero",
+  "ejercicios": {
+    "jalones_pala": { "nombre": "Jalones pala", "grupo": "Espalda", "search_hint_en": "lat pulldown MAG grip" },
+    "jalones_convergente": { "nombre": "Jalones convergente", "grupo": "Espalda", "search_hint_en": "iso-lateral converging lat pulldown machine" },
+    "jalones_cerrado": { "nombre": "Jalones cerrado", "grupo": "Espalda", "search_hint_en": "close grip lat pulldown" },
+    "remo_tiro_bajo_1_mano": { "nombre": "Remo tiro bajo 1 mano", "grupo": "Espalda", "search_hint_en": "single arm seated cable row" },
+    "remo_prono_multi": { "nombre": "Remo prono multi", "grupo": "Espalda", "search_hint_en": "smith machine bent over row pronated" },
+    "lumbares_banco_90": { "nombre": "Lumbares banco 90°", "grupo": "Espalda", "search_hint_en": "back extension 90 degree bench" },
+    "gemelos_burro": { "nombre": "Gemelos burro", "grupo": "Gemelos", "search_hint_en": "donkey calf raise" },
+    "gemelos_sentado": { "nombre": "Gemelos sentado", "grupo": "Gemelos", "search_hint_en": "seated calf raise" },
+    "crunch_90": { "nombre": "Crunch 90°", "grupo": "Abdomen", "search_hint_en": "crunch legs 90 degrees" },
+    "crunch_declinado_peso": { "nombre": "Crunch declinado con peso ligero", "grupo": "Abdomen", "search_hint_en": "decline weighted crunch" },
+    "elevacion_piernas_silla_romana": { "nombre": "Elevación de piernas en silla romana", "grupo": "Abdomen", "search_hint_en": "captain's chair leg raise" },
+    "press_multipower_hombro": { "nombre": "Press multipower", "grupo": "Hombro", "search_hint_en": "smith machine shoulder press" },
+    "press_mancuernas_hombro": { "nombre": "Press mancuernas (hombro)", "grupo": "Hombro", "search_hint_en": "seated dumbbell shoulder press" },
+    "elevacion_lateral_convergente": { "nombre": "Elevación lateral convergente", "grupo": "Hombro", "search_hint_en": "machine lateral raise" },
+    "frontales_disco_tumbado_30": { "nombre": "Frontales disco tumbado 30°", "grupo": "Hombro", "search_hint_en": "incline plate front raise" },
+    "posteriores_neutro_prono_placas": { "nombre": "Posteriores neutro + prono placas", "grupo": "Hombro", "search_hint_en": "plate loaded rear delt fly" },
+    "trapecio_carro": { "nombre": "Trapecio carro", "grupo": "Hombro", "search_hint_en": "machine shrug" },
+    "sentadilla_convergente": { "nombre": "Sentadilla convergente", "grupo": "Piernas", "search_hint_en": "V squat machine" },
+    "pendulo": { "nombre": "Péndulo", "grupo": "Piernas", "search_hint_en": "pendulum squat" },
+    "prensa_horizontal": { "nombre": "Prensa horizontal", "grupo": "Piernas", "search_hint_en": "horizontal leg press" },
+    "zancadas": { "nombre": "Zancadas", "grupo": "Piernas", "search_hint_en": "walking lunges", "nota": "El 20 se registra tal cual; editable si resulta ser por pierna." },
+    "curl_cuadriceps": { "nombre": "Curl cuádriceps", "grupo": "Piernas", "search_hint_en": "leg extension", "nota": "Interpretado como extensión de cuádriceps en máquina; el vídeo que enlace el usuario es lo que vale." },
+    "femoral_tumbado": { "nombre": "Femoral tumbado", "grupo": "Piernas", "search_hint_en": "lying leg curl" },
+    "curl_1_pierna_femoral": { "nombre": "Curl 1 pierna femoral", "grupo": "Piernas", "search_hint_en": "single leg curl" },
+    "simultaneo_sentado_rotacion": { "nombre": "Simultáneo sentado rotación", "grupo": "Bíceps", "search_hint_en": "seated dumbbell curl with rotation" },
+    "scott": { "nombre": "Scott", "grupo": "Bíceps", "search_hint_en": "preacher curl" },
+    "barra_z": { "nombre": "Barra Z", "grupo": "Bíceps", "search_hint_en": "EZ bar curl" },
+    "jesucristo": { "nombre": "Jesucristo", "grupo": "Bíceps", "search_hint_en": "overhead cable curl crucifix" },
+    "jalones_recto": { "nombre": "Jalones recto", "grupo": "Tríceps", "search_hint_en": "straight bar triceps pushdown" },
+    "impulsion": { "nombre": "Impulsión", "grupo": "Tríceps", "search_hint_en": "triceps dips", "nota": "Nombre ambiguo (¿fondos/dips o patada de tríceps?); se resolverá con el vídeo o foto que añada el usuario." },
+    "anilla_supino": { "nombre": "Anilla supino", "grupo": "Tríceps", "search_hint_en": "single handle supinated pushdown" },
+    "soga_tras_nuca": { "nombre": "Soga tras nuca", "grupo": "Tríceps", "search_hint_en": "overhead rope triceps extension" },
+    "press_mancuernas_pecho": { "nombre": "Press mancuernas (pecho)", "grupo": "Pecho", "search_hint_en": "flat dumbbell bench press" },
+    "press_convergente_pecho": { "nombre": "Press convergente", "grupo": "Pecho", "search_hint_en": "converging chest press machine" },
+    "aperturas_planas": { "nombre": "Aperturas planas", "grupo": "Pecho", "search_hint_en": "flat dumbbell fly" },
+    "inclinado_multi": { "nombre": "Inclinado multi", "grupo": "Pecho", "search_hint_en": "smith machine incline press" },
+    "aperturas_inclinadas": { "nombre": "Aperturas inclinadas", "grupo": "Pecho", "search_hint_en": "incline dumbbell fly" },
+    "press_declinado": { "nombre": "Press declinado", "grupo": "Pecho", "search_hint_en": "decline press" }
+  },
+  "rutina": [
+    {
+      "dia": "lunes",
+      "titulo": "Espalda y gemelos",
+      "items": [
+        { "ejercicio": "jalones_pala", "orden": 1, "series": 4, "reps": "12", "descanso_seg": 90 },
+        { "ejercicio": "jalones_convergente", "orden": 2, "series": 4, "reps": "10", "descanso_seg": 90 },
+        { "ejercicio": "jalones_cerrado", "orden": 3, "series": 4, "reps": "10", "descanso_seg": 90 },
+        { "ejercicio": "remo_tiro_bajo_1_mano", "orden": 4, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "remo_prono_multi", "orden": 5, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "lumbares_banco_90", "orden": 6, "series": 3, "reps": "25", "descanso_seg": 10 },
+        { "ejercicio": "gemelos_burro", "orden": 7, "series": 5, "reps": "20", "descanso_seg": 20 },
+        { "ejercicio": "gemelos_sentado", "orden": 8, "series": 5, "reps": "20", "descanso_seg": 20 }
+      ]
+    },
+    {
+      "dia": "martes",
+      "titulo": "Abdomen y hombro",
+      "items": [
+        { "ejercicio": "crunch_90", "orden": 1, "series": 4, "reps": "25", "descanso_seg": 30 },
+        { "ejercicio": "crunch_declinado_peso", "orden": 2, "series": 4, "reps": "15", "descanso_seg": 30 },
+        { "ejercicio": "elevacion_piernas_silla_romana", "orden": 3, "series": 3, "reps": "25", "descanso_seg": 30 },
+        { "ejercicio": "press_multipower_hombro", "orden": 4, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "press_mancuernas_hombro", "orden": 5, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "elevacion_lateral_convergente", "orden": 6, "series": 4, "reps": "12", "descanso_seg": 40 },
+        { "ejercicio": "frontales_disco_tumbado_30", "orden": 7, "series": 4, "reps": "12", "descanso_seg": 40 },
+        { "ejercicio": "posteriores_neutro_prono_placas", "orden": 8, "series": 4, "reps": "12+12", "descanso_seg": 40 },
+        { "ejercicio": "trapecio_carro", "orden": 9, "series": 4, "reps": "12", "descanso_seg": 40 }
+      ]
+    },
+    {
+      "dia": "miercoles",
+      "titulo": "Piernas",
+      "items": [
+        { "ejercicio": "sentadilla_convergente", "orden": 1, "series": 4, "reps": "12", "descanso_seg": 90 },
+        { "ejercicio": "pendulo", "orden": 2, "series": 4, "reps": "10", "descanso_seg": 90 },
+        { "ejercicio": "prensa_horizontal", "orden": 3, "series": 4, "reps": "15", "descanso_seg": 60 },
+        { "ejercicio": "zancadas", "orden": 4, "series": 4, "reps": "20", "descanso_seg": 60 },
+        { "ejercicio": "curl_cuadriceps", "orden": 5, "series": 4, "reps": "12", "descanso_seg": 40 },
+        { "ejercicio": "femoral_tumbado", "orden": 6, "series": 4, "reps": "12", "descanso_seg": 40 },
+        { "ejercicio": "curl_1_pierna_femoral", "orden": 7, "series": 4, "reps": "15", "descanso_seg": 40 }
+      ]
+    },
+    {
+      "dia": "jueves",
+      "titulo": "Bíceps y tríceps",
+      "items": [
+        { "ejercicio": "simultaneo_sentado_rotacion", "orden": 1, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "scott", "orden": 2, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "barra_z", "orden": 3, "series": 4, "reps": "12", "descanso_seg": 60 },
+        { "ejercicio": "jesucristo", "orden": 4, "series": 3, "reps": "20", "descanso_seg": 20 },
+        { "ejercicio": "jalones_recto", "orden": 5, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "impulsion", "orden": 6, "series": 4, "reps": "10", "descanso_seg": 60 },
+        { "ejercicio": "anilla_supino", "orden": 7, "series": 4, "reps": "15", "descanso_seg": 40 },
+        { "ejercicio": "soga_tras_nuca", "orden": 8, "series": 3, "reps": "20", "descanso_seg": 20 }
+      ]
+    },
+    {
+      "dia": "viernes",
+      "titulo": "Abdomen y pecho",
+      "items": [
+        { "ejercicio": "crunch_90", "orden": 1, "series": 4, "reps": "25", "descanso_seg": 30 },
+        { "ejercicio": "crunch_declinado_peso", "orden": 2, "series": 4, "reps": "15", "descanso_seg": 30 },
+        { "ejercicio": "elevacion_piernas_silla_romana", "orden": 3, "series": 3, "reps": "25", "descanso_seg": 30 },
+        { "ejercicio": "press_mancuernas_pecho", "orden": 4, "series": 4, "reps": "10", "descanso_seg": 90 },
+        { "ejercicio": "press_convergente_pecho", "orden": 5, "series": 4, "reps": "10", "descanso_seg": 90 },
+        { "ejercicio": "aperturas_planas", "orden": 6, "series": 3, "reps": "12", "descanso_seg": 40 },
+        { "ejercicio": "inclinado_multi", "orden": 7, "series": 4, "reps": "10", "descanso_seg": 90 },
+        { "ejercicio": "aperturas_inclinadas", "orden": 8, "series": 3, "reps": "12", "descanso_seg": 40 },
+        { "ejercicio": "press_declinado", "orden": 9, "series": 4, "reps": "10", "descanso_seg": 90 }
+      ]
+    }
+  ],
+  "cardio": [
+    { "dia": "lunes", "duracion_min": 40, "momento": "post-entreno", "tipo": "elíptica", "metodo": "PROG 3", "zona_velocidad": "Zona 1" },
+    { "dia": "sabado", "duracion_min": 50, "momento": "ayunas", "tipo": "caminar", "metodo": "continuo", "zona_velocidad": "Velocidad 6" }
+  ],
+  "descanso_total": ["domingo"]
+}

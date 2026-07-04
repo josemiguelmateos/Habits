@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-ink font-sans text-zinc-100 antialiased;
+    /* Zonas seguras iOS (notch / home indicator) */
+    padding-top: env(safe-area-inset-top);
+  }
+
+  html:not(.dark) body {
+    @apply bg-zinc-100 text-zinc-900;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-ink-border bg-ink-card;
+  }
+
+  html:not(.dark) .card {
+    @apply border-zinc-200 bg-white shadow-sm;
+  }
+}
