@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './routes/ProtectedRoute'
@@ -8,10 +9,15 @@ import { HomePage } from './pages/HomePage'
 import { WorkoutPage } from './pages/WorkoutPage'
 import { RoutinePage } from './pages/RoutinePage'
 import { CalendarPage } from './pages/CalendarPage'
-import { DashboardPage } from './pages/DashboardPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SetupPage } from './pages/SetupPage'
+import { Spinner } from './components/ui/Spinner'
 import { isSupabaseConfigured } from './lib/supabase'
+
+// Recharts pesa ~380 KB: la página de Progreso se carga solo al entrar
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+)
 
 export default function App() {
   if (!isSupabaseConfigured) return <SetupPage />
@@ -29,7 +35,20 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/rutina" element={<RoutinePage />} />
               <Route path="/calendario" element={<CalendarPage />} />
-              <Route path="/progreso" element={<DashboardPage />} />
+              <Route
+                path="/progreso"
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center py-20">
+                        <Spinner />
+                      </div>
+                    }
+                  >
+                    <DashboardPage />
+                  </Suspense>
+                }
+              />
               <Route path="/perfil" element={<ProfilePage />} />
             </Route>
           </Route>

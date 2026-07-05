@@ -105,7 +105,7 @@ export function RoutinePage() {
             </Button>
           </div>
           {importError && (
-            <p className="rounded-xl border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+            <p className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-500">
               {importError}
             </p>
           )}

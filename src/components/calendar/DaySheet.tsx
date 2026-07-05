@@ -221,9 +221,9 @@ export function DaySheet({ fecha, items, cardio, dayTitle, onClose, onChanged }:
           </p>
 
           {faltaMigracion && (
-            <p className="mt-2 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-200">
+            <p className="mt-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
               Para guardar kg y notas por día, ejecuta la migración{' '}
-              <code className="text-amber-100">0003_exercise_day_logs.sql</code> en el SQL
+              <code className="text-amber-700">0003_exercise_day_logs.sql</code> en el SQL
               Editor de Supabase.
             </p>
           )}

@@ -86,7 +86,7 @@ export function ImportJsonSheet({ open, onClose, onChanged }: Props) {
           className="rounded-xl border border-ink-border bg-ink-soft px-4 py-3 font-mono text-xs text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-accent"
         />
         {error && (
-          <p className="rounded-xl border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+          <p className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-500">
             {error}
           </p>
         )}

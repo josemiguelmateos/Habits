@@ -3,6 +3,44 @@
 @tailwind utilities;
 
 @layer base {
+  /* Modo claro (sin .dark): superficies claras, textos oscuros */
+  :root {
+    --ink: 244 244 245;
+    --ink-soft: 255 255 255;
+    --ink-card: 255 255 255;
+    --ink-raised: 228 228 231;
+    --ink-border: 212 212 216;
+
+    --z100: 24 24 27;
+    --z200: 39 39 42;
+    --z300: 63 63 70;
+    --z400: 82 82 91;
+    --z500: 113 113 122;
+    --z600: 161 161 170;
+    --z700: 212 212 216;
+    --z800: 228 228 231;
+    --z900: 244 244 245;
+  }
+
+  /* Modo oscuro (por defecto en la app) */
+  .dark {
+    --ink: 10 10 12;
+    --ink-soft: 17 17 20;
+    --ink-card: 23 23 27;
+    --ink-raised: 30 30 36;
+    --ink-border: 42 42 50;
+
+    --z100: 244 244 245;
+    --z200: 228 228 231;
+    --z300: 212 212 216;
+    --z400: 161 161 170;
+    --z500: 113 113 122;
+    --z600: 82 82 91;
+    --z700: 63 63 70;
+    --z800: 39 39 42;
+    --z900: 24 24 27;
+  }
+
   html {
     -webkit-tap-highlight-color: transparent;
   }
@@ -12,10 +50,6 @@
     /* Zonas seguras iOS (notch / home indicator) */
     padding-top: env(safe-area-inset-top);
   }
-
-  html:not(.dark) body {
-    @apply bg-zinc-100 text-zinc-900;
-  }
 }
 
 @layer components {
@@ -24,6 +58,6 @@
   }
 
   html:not(.dark) .card {
-    @apply border-zinc-200 bg-white shadow-sm;
+    @apply shadow-sm;
   }
 }

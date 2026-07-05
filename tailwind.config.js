@@ -5,13 +5,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Superficie oscura (dark mode por defecto)
+        // Superficies y textos como variables CSS: los valores viven en
+        // index.css y se invierten en modo claro sin tocar los componentes.
         ink: {
-          DEFAULT: '#0a0a0c',
-          soft: '#111114',
-          card: '#17171b',
-          raised: '#1e1e24',
-          border: '#2a2a32',
+          DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
+          soft: 'rgb(var(--ink-soft) / <alpha-value>)',
+          card: 'rgb(var(--ink-card) / <alpha-value>)',
+          raised: 'rgb(var(--ink-raised) / <alpha-value>)',
+          border: 'rgb(var(--ink-border) / <alpha-value>)',
+        },
+        zinc: {
+          100: 'rgb(var(--z100) / <alpha-value>)',
+          200: 'rgb(var(--z200) / <alpha-value>)',
+          300: 'rgb(var(--z300) / <alpha-value>)',
+          400: 'rgb(var(--z400) / <alpha-value>)',
+          500: 'rgb(var(--z500) / <alpha-value>)',
+          600: 'rgb(var(--z600) / <alpha-value>)',
+          700: 'rgb(var(--z700) / <alpha-value>)',
+          800: 'rgb(var(--z800) / <alpha-value>)',
+          900: 'rgb(var(--z900) / <alpha-value>)',
         },
         accent: {
           DEFAULT: '#a3e635', // verde lima eléctrico

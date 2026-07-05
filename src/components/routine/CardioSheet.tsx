@@ -136,7 +136,7 @@ export function CardioSheet({ cardio, nuevoWeekday, onClose, onChanged }: Props)
         />
 
         {error && (
-          <p className="rounded-xl border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+          <p className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-500">
             {error}
           </p>
         )}
@@ -148,7 +148,7 @@ export function CardioSheet({ cardio, nuevoWeekday, onClose, onChanged }: Props)
           <Button
             variant="ghost"
             onClick={() => void eliminar()}
-            className="text-red-400 hover:text-red-300"
+            className="text-red-500 hover:text-red-400"
           >
             Eliminar cardio
           </Button>

@@ -178,6 +178,16 @@ export function DashboardPage() {
 
   return (
     <div className="flex animate-fade-up flex-col gap-4">
+      {byFecha.size === 0 && (
+        <Card>
+          <p className="font-display text-lg font-semibold">Todavía no hay registros</p>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+            Marca tus hábitos en la pestaña Hoy o completa un entrenamiento y este
+            panel cobrará vida: rachas, heatmap, gráficas y logros.
+          </p>
+        </Card>
+      )}
+
       {/* Mensajes de refuerzo con datos reales */}
       {mensajes.length > 0 && (
         <Card className="border-accent/30">

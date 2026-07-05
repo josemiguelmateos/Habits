@@ -8,6 +8,9 @@ import { Input } from '../components/ui/Input'
 
 function aplicarTema(tema: 'dark' | 'light') {
   document.documentElement.classList.toggle('dark', tema === 'dark')
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', tema === 'dark' ? '#0a0a0c' : '#f4f4f5')
   localStorage.setItem('tema', tema)
 }
 
@@ -121,7 +124,7 @@ export function ProfilePage() {
             className={`rounded-xl px-4 py-3 text-sm ${
               mensaje === 'Guardado'
                 ? 'bg-accent/10 text-accent'
-                : 'border border-red-900/50 bg-red-950/40 text-red-300'
+                : 'border border-red-500/40 bg-red-500/10 text-red-500'
             }`}
           >
             {mensaje === 'Guardado' ? 'Cambios guardados.' : mensaje}
