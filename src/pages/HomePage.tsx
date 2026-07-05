@@ -1,33 +1,73 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useRoutine } from '../hooks/useRoutine'
+import { useProfile } from '../hooks/useProfile'
+import { useDailyLog } from '../hooks/useDailyLog'
 import { isoWeekday } from '../lib/days'
-import { EmptyState } from '../components/EmptyState'
+import { getWaterAmounts } from '../lib/waterButtons'
+import { dailyPoints } from '../lib/score'
+import { HydrationRing } from '../components/home/HydrationRing'
+import { HabitToggle } from '../components/HabitToggle'
+
+const HABITOS = [
+  { key: 'exercise_done', label: 'Ejercicio' },
+  { key: 'diet_done', label: 'Dieta' },
+  { key: 'sleep_done', label: 'Sueño' },
+  { key: 'hydration_done', label: 'Hidratación' },
+] as const
 
 export function HomePage() {
   const { user } = useAuth()
   const rutina = useRoutine()
-  const nombre = (user?.user_metadata?.nombre as string | undefined)?.split(' ')[0]
+  const { profile } = useProfile()
+  const dia = useDailyLog(
+    profile?.water_goal_ml ?? null,
+    profile?.sleep_goal_hours ?? null,
+  )
+  const [amounts] = useState<[number, number]>(getWaterAmounts)
+  const [sleepStr, setSleepStr] = useState('')
+
+  useEffect(() => {
+    setSleepStr(dia.log?.sleep_hours != null ? String(dia.log.sleep_hours) : '')
+  }, [dia.log?.sleep_hours])
+
+  const nombre =
+    profile?.nombre?.split(' ')[0] ??
+    (user?.user_metadata?.nombre as string | undefined)?.split(' ')[0]
   const hoy = isoWeekday()
 
   const dayHoy = rutina.days.find((d) => d.weekday === hoy) ?? null
   const cardioHoy = rutina.cardio.filter((c) => c.weekday === hoy)
   const itemsHoy = dayHoy ? (rutina.itemsByDay.get(dayHoy.id) ?? []) : []
-  const tieneRutina = rutina.days.length > 0 || rutina.exercises.length > 0
+  const tieneRutina =
+    rutina.days.length > 0 || rutina.exercises.length > 0 || rutina.cardio.length > 0
+
+  const puntos = dailyPoints(dia.log)
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="animate-fade-up">
-        <p className="text-sm text-zinc-500">
-          {new Date().toLocaleDateString('es-ES', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
-        </p>
-        <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
-          {nombre ? `Hola, ${nombre}.` : 'Hola.'}
-        </h2>
+    <div className="flex flex-col gap-4">
+      <div className="flex animate-fade-up items-end justify-between">
+        <div>
+          <p className="text-sm text-zinc-500">
+            {new Date().toLocaleDateString('es-ES', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </p>
+          <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
+            {nombre ? `Hola, ${nombre}.` : 'Hola.'}
+          </h2>
+        </div>
+        <div className="text-right">
+          <p className="font-display text-2xl font-bold leading-none text-accent">
+            {puntos.points}
+          </p>
+          <p className="mt-0.5 text-[11px] uppercase tracking-wider text-zinc-500">
+            {puntos.perfect ? 'día perfecto' : 'puntos hoy'}
+          </p>
+        </div>
       </div>
 
       {/* Entrenamiento de hoy */}
@@ -59,26 +99,15 @@ export function HomePage() {
               </svg>
             </span>
           </Link>
-        ) : tieneRutina ? (
-          <div className="card animate-fade-up px-5 py-4">
-            <p className="font-display text-lg font-semibold">
-              {hoy === 7 ? 'Descanso total' : 'Hoy no hay entrenamiento'}
-            </p>
-            <p className="mt-1 text-sm text-zinc-500">
-              {hoy === 7
-                ? 'La recuperación también cuenta. Nos vemos el lunes.'
-                : 'Puedes asignar algo a este día desde la rutina.'}
-            </p>
-          </div>
-        ) : (
+        ) : !tieneRutina ? (
           <Link
             to="/rutina"
             className="card flex animate-fade-up items-center justify-between px-5 py-4 transition-colors hover:border-accent/50"
           >
             <div>
-              <p className="font-display text-lg font-semibold">Importa tu rutina</p>
+              <p className="font-display text-lg font-semibold">Monta tu rutina</p>
               <p className="mt-1 text-sm text-zinc-500">
-                5 días de pesas + cardio, lista en un toque.
+                Importa la de ejemplo, pega la tuya o empieza en blanco.
               </p>
             </div>
             <span className="text-accent">
@@ -87,26 +116,61 @@ export function HomePage() {
               </svg>
             </span>
           </Link>
-        ))}
+        ) : null)}
 
-      <EmptyState
-        fase="Fase 3"
-        titulo="Tu día, de un vistazo"
-        descripcion="Aquí vivirán el anillo de hidratación con botones +250/+500 ml, los cuatro hábitos del día y el registro de sueño."
-        icon={
-          <svg
-            viewBox="0 0 24 24"
-            className="h-10 w-10"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          >
-            <circle cx="12" cy="12" r="9" strokeOpacity="0.25" />
-            <path d="M12 3a9 9 0 0 1 9 9" />
-          </svg>
-        }
-      />
+      {/* Hidratación */}
+      <div className="animate-fade-up [animation-delay:80ms]">
+        <HydrationRing
+          waterMl={dia.log?.water_ml ?? 0}
+          goal={profile?.water_goal_ml ?? 2500}
+          done={Boolean(dia.log?.hydration_done)}
+          amounts={amounts}
+          onAdd={(ml) => void dia.addWater(ml)}
+          onReset={() => void dia.resetWater()}
+          disabled={dia.log === null}
+        />
+      </div>
+
+      {/* Hábitos de hoy */}
+      <div className="grid animate-fade-up grid-cols-2 gap-2.5 [animation-delay:140ms]">
+        {HABITOS.map((h) => (
+          <HabitToggle
+            key={h.key}
+            label={h.label}
+            active={Boolean(dia.log?.[h.key])}
+            disabled={dia.log === null}
+            onToggle={() => void dia.toggleHabit(h.key)}
+          />
+        ))}
+      </div>
+
+      {/* Sueño */}
+      <div className="card flex animate-fade-up items-center justify-between px-5 py-4 [animation-delay:200ms]">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Sueño de anoche
+          </p>
+          <p className="mt-1 text-sm text-zinc-500">
+            Objetivo: {profile?.sleep_goal_hours ?? 7} h
+          </p>
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={sleepStr}
+            onChange={(e) => setSleepStr(e.target.value)}
+            onBlur={() => {
+              const v = sleepStr.trim().replace(',', '.')
+              const n = v === '' ? null : parseFloat(v)
+              void dia.setSleep(n != null && !Number.isNaN(n) ? n : null)
+            }}
+            placeholder="—"
+            className="w-16 rounded-xl border border-ink-border bg-ink-soft px-2 py-2 text-center font-display text-xl font-bold text-zinc-100 outline-none focus:border-accent"
+          />
+          <span className="text-sm text-zinc-500">h</span>
+        </div>
+      </div>
     </div>
   )
 }

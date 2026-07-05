@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import type { CardioSession, DailyLog, ExerciseDayLog, RoutineItem } from '../../types'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import { useProfile } from '../../hooks/useProfile'
 import { isoWeekday } from '../../lib/days'
 import { Modal } from '../ui/Modal'
+import { HabitToggle } from '../HabitToggle'
 
 const HABITOS = [
   { key: 'exercise_done', label: 'Ejercicio' },
@@ -28,6 +30,7 @@ interface Props {
  */
 export function DaySheet({ fecha, items, cardio, dayTitle, onClose, onChanged }: Props) {
   const { user } = useAuth()
+  const { profile } = useProfile()
   const [log, setLog] = useState<Partial<DailyLog> | null>(null)
   const [edl, setEdl] = useState<Map<string, ExerciseDayLog>>(new Map())
   const [sleepStr, setSleepStr] = useState('')
@@ -79,6 +82,21 @@ export function DaySheet({ fecha, items, cardio, dayTitle, onClose, onChanged }:
     onChanged()
   }
 
+  // Reglas automáticas (con corrección manual siempre disponible en los toggles)
+  const setAgua = (ml: number) =>
+    upsertDia({
+      water_ml: ml,
+      ...(profile ? { hydration_done: ml >= profile.water_goal_ml } : {}),
+    })
+
+  const setSueno = (horas: number | null) =>
+    upsertDia({
+      sleep_hours: horas,
+      ...(profile
+        ? { sleep_done: horas != null && horas >= profile.sleep_goal_hours }
+        : {}),
+    })
+
   const upsertEjercicio = async (exerciseId: string) => {
     if (!user || faltaMigracion) return
     const draft = borradores[exerciseId]
@@ -118,36 +136,15 @@ export function DaySheet({ fecha, items, cardio, dayTitle, onClose, onChanged }:
       <div className="flex flex-col gap-5 pb-4">
         {/* Hábitos del día */}
         <div className="grid grid-cols-2 gap-2.5">
-          {HABITOS.map((h) => {
-            const activo = Boolean(log?.[h.key])
-            return (
-              <button
-                key={h.key}
-                type="button"
-                disabled={log === null}
-                aria-pressed={activo}
-                onClick={() => void upsertDia({ [h.key]: !activo })}
-                className={`flex min-h-12 items-center justify-between rounded-xl border px-4 transition-all active:scale-[0.98] ${
-                  activo
-                    ? 'border-accent bg-accent/15 text-accent'
-                    : 'border-ink-border bg-ink-card text-zinc-300'
-                }`}
-              >
-                <span className="text-sm font-semibold">{h.label}</span>
-                <span
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                    activo ? 'border-accent bg-accent text-accent-ink' : 'border-zinc-600'
-                  }`}
-                >
-                  {activo && (
-                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </span>
-              </button>
-            )
-          })}
+          {HABITOS.map((h) => (
+            <HabitToggle
+              key={h.key}
+              label={h.label}
+              active={Boolean(log?.[h.key])}
+              disabled={log === null}
+              onToggle={() => void upsertDia({ [h.key]: !log?.[h.key] })}
+            />
+          ))}
         </div>
 
         {/* Agua y sueño */}
@@ -163,14 +160,14 @@ export function DaySheet({ fecha, items, cardio, dayTitle, onClose, onChanged }:
             <div className="mt-2 flex gap-1.5">
               <button
                 type="button"
-                onClick={() => void upsertDia({ water_ml: (log?.water_ml ?? 0) + 250 })}
+                onClick={() => void setAgua((log?.water_ml ?? 0) + 250)}
                 className="flex-1 rounded-lg bg-ink-raised py-1.5 text-xs font-semibold text-zinc-300 hover:text-accent"
               >
                 +250
               </button>
               <button
                 type="button"
-                onClick={() => void upsertDia({ water_ml: (log?.water_ml ?? 0) + 500 })}
+                onClick={() => void setAgua((log?.water_ml ?? 0) + 500)}
                 className="flex-1 rounded-lg bg-ink-raised py-1.5 text-xs font-semibold text-zinc-300 hover:text-accent"
               >
                 +500
@@ -178,7 +175,7 @@ export function DaySheet({ fecha, items, cardio, dayTitle, onClose, onChanged }:
               <button
                 type="button"
                 aria-label="Poner agua a cero"
-                onClick={() => void upsertDia({ water_ml: 0 })}
+                onClick={() => void setAgua(0)}
                 className="rounded-lg bg-ink-raised px-2 py-1.5 text-xs text-zinc-500 hover:text-zinc-300"
               >
                 ↺
@@ -198,7 +195,7 @@ export function DaySheet({ fecha, items, cardio, dayTitle, onClose, onChanged }:
                 onBlur={() => {
                   const v = sleepStr.trim().replace(',', '.')
                   const n = v === '' ? null : parseFloat(v)
-                  void upsertDia({ sleep_hours: n != null && !Number.isNaN(n) ? n : null })
+                  void setSueno(n != null && !Number.isNaN(n) ? n : null)
                 }}
                 placeholder="—"
                 className="w-14 rounded-lg border border-ink-border bg-ink-soft px-2 py-1 text-center font-display text-xl font-bold text-zinc-100 outline-none focus:border-accent"

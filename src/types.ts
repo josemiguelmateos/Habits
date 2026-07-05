@@ -1,3 +1,13 @@
+export interface Profile {
+  id: string
+  nombre: string | null
+  objetivo: string
+  fecha_inicio: string
+  water_goal_ml: number
+  sleep_goal_hours: number
+  theme: string
+}
+
 export interface Exercise {
   id: string
   user_id: string
