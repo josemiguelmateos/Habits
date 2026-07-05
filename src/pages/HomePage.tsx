@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useRoutine } from '../hooks/useRoutine'
 import { useProfile } from '../hooks/useProfile'
 import { useDailyLog } from '../hooks/useDailyLog'
-import { isoWeekday } from '../lib/days'
+import { isoWeekday, localDateStr } from '../lib/days'
+import { addDays } from '../lib/streaks'
 import { getWaterAmounts } from '../lib/waterButtons'
 import { dailyPoints } from '../lib/score'
 import { HydrationRing } from '../components/home/HydrationRing'
@@ -27,10 +29,26 @@ export function HomePage() {
   )
   const [amounts] = useState<[number, number]>(getWaterAmounts)
   const [sleepStr, setSleepStr] = useState('')
+  const [ayerSinRegistrar, setAyerSinRegistrar] = useState(false)
 
   useEffect(() => {
     setSleepStr(dia.log?.sleep_hours != null ? String(dia.log.sleep_hours) : '')
   }, [dia.log?.sleep_hours])
+
+  // Banner discreto si ayer quedó sin registrar (solo si ya hay historial)
+  useEffect(() => {
+    if (!user) return
+    const ayer = addDays(localDateStr(), -1)
+    void supabase
+      .from('daily_log')
+      .select('fecha')
+      .lte('fecha', ayer)
+      .order('fecha', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        setAyerSinRegistrar(Boolean(data?.length && data[0].fecha < ayer))
+      })
+  }, [user])
 
   const nombre =
     profile?.nombre?.split(' ')[0] ??
@@ -69,6 +87,16 @@ export function HomePage() {
           </p>
         </div>
       </div>
+
+      {ayerSinRegistrar && (
+        <Link
+          to="/calendario"
+          className="flex animate-fade-up items-center justify-between rounded-xl border border-ink-border bg-ink-soft px-4 py-3 text-sm text-zinc-400 transition-colors hover:border-accent/40"
+        >
+          <span>Ayer quedó sin registrar.</span>
+          <span className="font-semibold text-accent">Completar</span>
+        </Link>
+      )}
 
       {/* Entrenamiento de hoy */}
       {!rutina.loading &&
