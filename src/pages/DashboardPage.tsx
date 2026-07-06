@@ -19,8 +19,12 @@ import { isoWeekday, localDateStr } from '../lib/days'
 import { levelFromXp } from '../lib/level'
 import { volumen, maxPorEjercicio, formatKg, type SetLike, type PesoFecha } from '../lib/stats'
 import { sugerenciaHabito, sugerenciaProgresion, sugerenciaSueno } from '../lib/coach'
+import { syncMemberStats } from '../lib/social'
+import { analisisGuardado, pedirAnalisisIA, type AnalisisIA } from '../lib/aiCoach'
 import { Heatmap } from '../components/dashboard/Heatmap'
+import { Leaderboard } from '../components/social/Leaderboard'
 import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
 
 const ACCENT = '#a3e635'
@@ -43,8 +47,18 @@ interface PesoPunto {
 export function DashboardPage() {
   const { user } = useAuth()
   const { profile } = useProfile()
-  const { byFecha, doneSets, earliest, loading } = useAllLogs()
+  const { logs, byFecha, doneSets, earliest, loading } = useAllLogs()
   const today = localDateStr()
+
+  const [ia, setIa] = useState<AnalisisIA | null>(analisisGuardado)
+  const [iaBusy, setIaBusy] = useState(false)
+  const [iaError, setIaError] = useState<string | null>(null)
+
+  // Publica la instantánea agregada para el leaderboard de amigos
+  useEffect(() => {
+    if (!user || loading || !profile) return
+    void syncMemberStats(user.id, profile.nombre, logs)
+  }, [user, loading, profile, logs])
 
   const [ventana, setVentana] = useState<7 | 30 | 90>(30)
   const [ejercicios, setEjercicios] = useState<{ id: string; nombre: string }[]>([])
@@ -231,6 +245,44 @@ export function DashboardPage() {
     return out.slice(0, 3)
   }, [pesoPorEjercicio, exNames, doneSets, byFecha, profile, today])
 
+  const generarIA = async () => {
+    setIaBusy(true)
+    setIaError(null)
+    let sumaAgua = 0
+    const horasSueno: number[] = []
+    for (let i = 0; i < 14; i++) {
+      const l = byFecha.get(addDays(today, -i))
+      sumaAgua += l?.water_ml ?? 0
+      if (l?.sleep_hours != null) horasSueno.push(l.sleep_hours)
+    }
+    const resumen: Record<string, unknown> = {
+      objetivo: profile?.objetivo ?? 'Hipertrofia',
+      nivel: `${nivel.level} (${nivel.name})`,
+      dias_registrados: byFecha.size,
+      cumplimiento_14d: Object.fromEntries(
+        HABIT_KEYS.map((k) => [HABIT_LABELS[k], `${completionPct(doneSets[k], today, 14)}%`]),
+      ),
+      rachas_actuales: Object.fromEntries(
+        HABIT_KEYS.map((k) => [HABIT_LABELS[k], rachas[k].current]),
+      ),
+      media_agua_ml_14d: Math.round(sumaAgua / 14),
+      media_sueno_h_14d: horasSueno.length
+        ? Math.round((horasSueno.reduce((a, b) => a + b, 0) / horasSueno.length) * 10) / 10
+        : null,
+      objetivo_agua_ml: profile?.water_goal_ml,
+      objetivo_sueno_h: profile?.sleep_goal_hours,
+      volumen_kg: vol,
+      records_recientes: records.slice(0, 5).map((r) => `${r.nombre}: ${r.peso} kg (${r.fecha})`),
+    }
+    try {
+      setIa(await pedirAnalisisIA(resumen))
+    } catch (e) {
+      setIaError(e instanceof Error ? e.message : 'Error inesperado')
+    } finally {
+      setIaBusy(false)
+    }
+  }
+
   const badges = useMemo(() => {
     const out: { label: string; num: number; ok: boolean }[] = []
     for (const k of HABIT_KEYS) {
@@ -274,6 +326,9 @@ export function DashboardPage() {
           ))}
         </Card>
       )}
+
+      {/* Liga de amigos */}
+      <Leaderboard />
 
       {/* Nivel */}
       <Card>
@@ -347,21 +402,58 @@ export function DashboardPage() {
       </Card>
 
       {/* Coach */}
-      {coach.length > 0 && (
+      {byFecha.size > 0 && (
         <Card>
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
             Coach
           </p>
-          <ul className="mt-2 flex flex-col gap-2">
-            {coach.map((c) => (
-              <li key={c} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-300">
-                <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" />
-                </svg>
-                {c}
-              </li>
-            ))}
-          </ul>
+          {coach.length > 0 && (
+            <ul className="mt-2 flex flex-col gap-2">
+              {coach.map((c) => (
+                <li key={c} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-300">
+                  <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" />
+                  </svg>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Análisis con IA (Edge Function ai-coach → Claude) */}
+          <div className={coach.length > 0 ? 'mt-4 border-t border-ink-border/60 pt-4' : 'mt-2'}>
+            {ia && (
+              <>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-300">
+                  {ia.texto}
+                </p>
+                <p className="mt-2 text-[11px] text-zinc-600">
+                  Análisis IA del{' '}
+                  {new Date(`${ia.fecha}T12:00:00`).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                </p>
+              </>
+            )}
+            {iaError && (
+              <p className="mb-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+                {iaError}
+              </p>
+            )}
+            <Button
+              variant="secondary"
+              onClick={() => void generarIA()}
+              disabled={iaBusy}
+              className="mt-3 w-full"
+            >
+              {iaBusy
+                ? 'Analizando…'
+                : ia
+                  ? 'Regenerar análisis IA'
+                  : 'Análisis IA de tu semana'}
+            </Button>
+          </div>
         </Card>
       )}
 

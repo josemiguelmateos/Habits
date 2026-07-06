@@ -5,6 +5,7 @@ import { getWaterAmounts, setWaterAmounts } from '../lib/waterButtons'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
+import { GroupsCard } from '../components/social/GroupsCard'
 
 function aplicarTema(tema: 'dark' | 'light') {
   document.documentElement.classList.toggle('dark', tema === 'dark')
@@ -134,6 +135,8 @@ export function ProfilePage() {
           {guardando ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </Card>
+
+      <GroupsCard />
 
       <Card className="flex items-center justify-between">
         <div>

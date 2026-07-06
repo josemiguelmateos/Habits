@@ -23,6 +23,7 @@ App personal de seguimiento y gamificación de hábitos diarios: **entrenamiento
    1. `0001_initial_schema.sql` (tablas + RLS + trigger de perfil)
    2. `0002_storage_bucket.sql` (bucket privado de fotos)
    3. `0003_exercise_day_logs.sql` (diario de kg/notas por ejercicio)
+   4. `0004_friends.sql` (modo amigos: grupos, códigos de invitación y leaderboard)
 3. **Authentication → Sign In / Providers → Email**: desactiva **Confirm email** (el email gratuito de Supabase tiene un límite muy bajo y para 2-4 usuarios no compensa).
 4. **Project Settings → API**: copia la **Project URL** y la clave **anon / publishable**.
 
@@ -50,7 +51,34 @@ Si faltan las variables, la app muestra una pantalla de configuración con estos
 
 > La clave *anon* no es un secreto: viaja en el navegador por diseño. Lo que protege los datos es el RLS: cada usuario solo ve lo suyo.
 
-### 4. Para cada amigo que se una
+### 4. Coach IA (opcional) — Edge Function + clave de Anthropic
+
+El botón "Análisis IA de tu semana" (pestaña Progreso) llama a una Edge Function
+que envía un resumen agregado de tus datos a Claude. La clave API vive como
+secreto en Supabase: nunca llega al navegador.
+
+1. Crea una clave API en [console.anthropic.com](https://console.anthropic.com)
+   (requiere método de pago; cada análisis cuesta ~1-2 céntimos con el modelo configurado, `claude-opus-4-8`).
+2. En Supabase: **Edge Functions → Deploy a new function** → nombre `ai-coach` →
+   pega el contenido de `supabase/functions/ai-coach/index.ts` → Deploy.
+3. En **Edge Functions → ai-coach → Secrets** (o Project Settings → Edge Functions):
+   añade `ANTHROPIC_API_KEY` con tu clave.
+
+Si prefieres la CLI de Supabase: `supabase functions deploy ai-coach` y
+`supabase secrets set ANTHROPIC_API_KEY=sk-ant-...`.
+
+Sin desplegar la función, la app funciona igual: el botón muestra un aviso y el
+Coach de reglas (gratuito, en local) sigue haciendo sugerencias.
+
+### 5. Modo amigos
+
+Con la migración `0004` aplicada: en **Perfil → Amigos** crea un grupo y comparte
+el código de 6 letras; tus amigos lo introducen en "Unirse con código". El
+leaderboard semanal aparece en **Progreso** para todos los miembros. Solo se
+comparte cumplimiento agregado (puntos, racha de ejercicio, días perfectos y
+nivel) — nunca notas, comidas ni detalles.
+
+### 6. Para cada amigo que se una
 
 1. Abrir la URL de Netlify → **Crea tu cuenta**.
 2. En **Rutina**, elegir: importar la rutina de ejemplo, **pegar la suya en JSON** (consejo: pásale una foto de tu tabla a ChatGPT/Claude y pídele el formato del ejemplo que muestra la app) o empezar en blanco.

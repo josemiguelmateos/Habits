@@ -10,6 +10,7 @@ import { addDays } from '../lib/streaks'
 import { getWaterAmounts } from '../lib/waterButtons'
 import { dailyPoints } from '../lib/score'
 import { levelFromXp } from '../lib/level'
+import { syncMemberStats } from '../lib/social'
 import { useAllLogs } from '../hooks/useAllLogs'
 import { HydrationRing } from '../components/home/HydrationRing'
 import { HabitToggle } from '../components/HabitToggle'
@@ -37,6 +38,12 @@ export function HomePage() {
   useEffect(() => {
     setSleepStr(dia.log?.sleep_hours != null ? String(dia.log.sleep_hours) : '')
   }, [dia.log?.sleep_hours])
+
+  // Publica la instantánea agregada para el leaderboard de amigos
+  useEffect(() => {
+    if (!user || todos.loading || !profile) return
+    void syncMemberStats(user.id, profile.nombre, todos.logs)
+  }, [user, todos.loading, profile, todos.logs])
 
   // Banner discreto si ayer quedó sin registrar (solo si ya hay historial)
   useEffect(() => {
