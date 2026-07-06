@@ -9,6 +9,8 @@ import { isoWeekday, localDateStr } from '../lib/days'
 import { addDays } from '../lib/streaks'
 import { getWaterAmounts } from '../lib/waterButtons'
 import { dailyPoints } from '../lib/score'
+import { levelFromXp } from '../lib/level'
+import { useAllLogs } from '../hooks/useAllLogs'
 import { HydrationRing } from '../components/home/HydrationRing'
 import { HabitToggle } from '../components/HabitToggle'
 
@@ -27,6 +29,7 @@ export function HomePage() {
     profile?.water_goal_ml ?? null,
     profile?.sleep_goal_hours ?? null,
   )
+  const todos = useAllLogs()
   const [amounts] = useState<[number, number]>(getWaterAmounts)
   const [sleepStr, setSleepStr] = useState('')
   const [ayerSinRegistrar, setAyerSinRegistrar] = useState(false)
@@ -62,6 +65,9 @@ export function HomePage() {
     rutina.days.length > 0 || rutina.exercises.length > 0 || rutina.cardio.length > 0
 
   const puntos = dailyPoints(dia.log)
+  const nivel = levelFromXp(
+    todos.logs.reduce((acc, l) => acc + dailyPoints(l).points, 0),
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -87,6 +93,26 @@ export function HomePage() {
           </p>
         </div>
       </div>
+
+      {/* Nivel: el progreso que nunca baja */}
+      {!todos.loading && (
+        <div className="animate-fade-up">
+          <div className="flex items-baseline justify-between text-[11px]">
+            <p className="font-display font-semibold uppercase tracking-wider text-zinc-400">
+              Nv. {nivel.level} · {nivel.name}
+            </p>
+            <p className="text-zinc-600">
+              {nivel.intoLevel}/{nivel.forNext} XP
+            </p>
+          </div>
+          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-ink-raised">
+            <div
+              className="h-full rounded-full bg-accent/80 transition-all duration-700"
+              style={{ width: `${(nivel.intoLevel / nivel.forNext) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {ayerSinRegistrar && (
         <Link

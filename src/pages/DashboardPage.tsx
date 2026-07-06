@@ -16,6 +16,9 @@ import { HABIT_KEYS, HABIT_LABELS, useAllLogs, type HabitKey } from '../hooks/us
 import { addDays, completionPct, computeStreaks } from '../lib/streaks'
 import { dailyPoints } from '../lib/score'
 import { isoWeekday, localDateStr } from '../lib/days'
+import { levelFromXp } from '../lib/level'
+import { volumen, maxPorEjercicio, formatKg, type SetLike, type PesoFecha } from '../lib/stats'
+import { sugerenciaHabito, sugerenciaProgresion, sugerenciaSueno } from '../lib/coach'
 import { Heatmap } from '../components/dashboard/Heatmap'
 import { Card } from '../components/ui/Card'
 import { Spinner } from '../components/ui/Spinner'
@@ -49,6 +52,9 @@ export function DashboardPage() {
   const [pesoPorEjercicio, setPesoPorEjercicio] = useState<Map<string, PesoPunto[]>>(
     new Map(),
   )
+  const [setRows, setSetRows] = useState<SetLike[]>([])
+  const [edlRows, setEdlRows] = useState<PesoFecha[]>([])
+  const [exNames, setExNames] = useState<Map<string, string>>(new Map())
 
   // Cargas: set_logs (máx por día) + exercise_day_logs, fusionados
   useEffect(() => {
@@ -56,9 +62,18 @@ export function DashboardPage() {
     void (async () => {
       const [ex, sl, edl] = await Promise.all([
         supabase.from('exercises').select('id, nombre').order('nombre'),
-        supabase.from('set_logs').select('exercise_id, fecha, peso_usado'),
+        supabase.from('set_logs').select('exercise_id, fecha, reps_hechas, peso_usado'),
         supabase.from('exercise_day_logs').select('exercise_id, fecha, peso'),
       ])
+      const sets = (sl.data ?? []) as SetLike[]
+      // edl.error (tabla sin crear) se ignora: simplemente no aporta puntos
+      const diarios = ((edl.data ?? []) as { exercise_id: string; fecha: string; peso: number | null }[])
+      setSetRows(sets)
+      setEdlRows(diarios)
+      setExNames(
+        new Map(((ex.data ?? []) as { id: string; nombre: string }[]).map((e) => [e.id, e.nombre])),
+      )
+
       const mapa = new Map<string, Map<string, number>>()
       const add = (exId: string, fecha: string, kg: number | null) => {
         if (kg == null) return
@@ -66,13 +81,8 @@ export function DashboardPage() {
         porFecha.set(fecha, Math.max(porFecha.get(fecha) ?? 0, kg))
         mapa.set(exId, porFecha)
       }
-      for (const r of sl.data ?? []) {
-        add(r.exercise_id as string, r.fecha as string, r.peso_usado as number | null)
-      }
-      // edl.error (tabla sin crear) se ignora: simplemente no aporta puntos
-      for (const r of edl.data ?? []) {
-        add(r.exercise_id as string, r.fecha as string, r.peso as number | null)
-      }
+      for (const r of sets) add(r.exercise_id, r.fecha, r.peso_usado)
+      for (const r of diarios) add(r.exercise_id, r.fecha, r.peso)
       const series = new Map<string, PesoPunto[]>()
       for (const [exId, porFecha] of mapa) {
         series.set(
@@ -155,6 +165,72 @@ export function DashboardPage() {
 
   const seriePeso = ejercicioSel ? (pesoPorEjercicio.get(ejercicioSel) ?? []) : []
 
+  const nivel = useMemo(
+    () =>
+      levelFromXp(
+        [...byFecha.values()].reduce((acc, l) => acc + dailyPoints(l).points, 0),
+      ),
+    [byFecha],
+  )
+
+  const vol = useMemo(() => {
+    const monday = addDays(today, -(isoWeekday() - 1))
+    const primeroMes = today.slice(0, 8) + '01'
+    return {
+      semana: volumen(setRows, monday, today),
+      mes: volumen(setRows, primeroMes, today),
+      total: volumen(setRows),
+    }
+  }, [setRows, today])
+
+  // Récords personales: máximo histórico por ejercicio, los más recientes primero
+  const records = useMemo(() => {
+    const maxes = maxPorEjercicio([
+      ...setRows.map((s) => ({
+        exercise_id: s.exercise_id,
+        fecha: s.fecha,
+        peso: s.peso_usado,
+      })),
+      ...edlRows,
+    ])
+    return [...maxes.entries()]
+      .map(([exId, m]) => ({ nombre: exNames.get(exId) ?? '—', ...m }))
+      .sort((a, b) => (a.fecha > b.fecha ? -1 : 1))
+      .slice(0, 8)
+  }, [setRows, edlRows, exNames])
+
+  // Coach: sugerencias accionables a partir de tus datos
+  const coach = useMemo(() => {
+    const out: string[] = []
+    for (const [exId, serie] of pesoPorEjercicio) {
+      if (out.length >= 2) break
+      const sesiones = [...serie]
+        .reverse()
+        .map((p) => ({ fecha: p.fecha, peso: p.kg, repsOk: true }))
+      const s = sugerenciaProgresion(exNames.get(exId) ?? 'Ejercicio', sesiones)
+      if (s) out.push(s)
+    }
+    // Con menos de una semana de historial, los % aún no dicen nada
+    const hab =
+      byFecha.size >= 7
+        ? sugerenciaHabito(
+            HABIT_KEYS.map((k) => ({
+              nombre: HABIT_LABELS[k],
+              pct: completionPct(doneSets[k], today, 14),
+            })),
+          )
+        : null
+    if (hab) out.push(hab)
+    const horas: number[] = []
+    for (let i = 1; i <= 14; i++) {
+      const h = byFecha.get(addDays(today, -i))?.sleep_hours
+      if (h != null) horas.push(h)
+    }
+    const su = sugerenciaSueno(horas, profile?.sleep_goal_hours ?? 7)
+    if (su) out.push(su)
+    return out.slice(0, 3)
+  }, [pesoPorEjercicio, exNames, doneSets, byFecha, profile, today])
+
   const badges = useMemo(() => {
     const out: { label: string; num: number; ok: boolean }[] = []
     for (const k of HABIT_KEYS) {
@@ -199,6 +275,34 @@ export function DashboardPage() {
         </Card>
       )}
 
+      {/* Nivel */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Nivel
+            </p>
+            <p className="mt-0.5 font-display text-2xl font-bold">
+              {nivel.level}
+              <span className="ml-2 text-base font-semibold text-accent">
+                {nivel.name}
+              </span>
+            </p>
+          </div>
+          <p className="text-right text-xs text-zinc-500">
+            {nivel.intoLevel}/{nivel.forNext} XP
+            <br />
+            <span className="text-zinc-600">{nivel.xp} en total</span>
+          </p>
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink-raised">
+          <div
+            className="h-full rounded-full bg-accent transition-all duration-700"
+            style={{ width: `${(nivel.intoLevel / nivel.forNext) * 100}%` }}
+          />
+        </div>
+      </Card>
+
       {/* Puntos */}
       <div className="grid grid-cols-3 gap-2.5">
         {[
@@ -241,6 +345,25 @@ export function DashboardPage() {
           (máx. 1 gracia por semana).
         </p>
       </Card>
+
+      {/* Coach */}
+      {coach.length > 0 && (
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Coach
+          </p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {coach.map((c) => (
+              <li key={c} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-300">
+                <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" />
+                </svg>
+                {c}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {/* % de cumplimiento */}
       <Card>
@@ -296,6 +419,27 @@ export function DashboardPage() {
         </p>
         <Heatmap byFecha={byFecha} today={today} />
       </Card>
+
+      {/* Volumen movido */}
+      {vol.total > 0 && (
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Volumen movido
+          </p>
+          <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+            {[
+              { label: 'esta semana', valor: vol.semana },
+              { label: 'este mes', valor: vol.mes },
+              { label: 'total', valor: vol.total },
+            ].map((c) => (
+              <div key={c.label}>
+                <p className="font-display text-xl font-bold">{formatKg(c.valor)}</p>
+                <p className="mt-0.5 text-[11px] text-zinc-500">{c.label}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Agua */}
       <Card>
@@ -379,6 +523,31 @@ export function DashboardPage() {
           </>
         )}
       </Card>
+
+      {/* Récords personales */}
+      {records.length > 0 && (
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Récords personales
+          </p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {records.map((r) => (
+              <li key={r.nombre} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 truncate text-sm text-zinc-300">{r.nombre}</span>
+                <span className="shrink-0 font-display text-sm font-bold">
+                  {r.peso} kg
+                  <span className="ml-2 font-sans text-xs font-normal text-zinc-600">
+                    {new Date(`${r.fecha}T12:00:00`).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'short',
+                    })}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {/* Badges */}
       <Card>

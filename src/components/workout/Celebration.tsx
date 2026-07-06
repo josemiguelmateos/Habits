@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { formatKg } from '../../lib/stats'
+import type { PrEvent } from './PrToast'
 
 interface Props {
   seriesHechas: number
@@ -6,9 +8,19 @@ interface Props {
   points: number
   habitsDone: number
   perfect: boolean
+  volumenKg?: number
+  prs?: PrEvent[]
 }
 
-export function Celebration({ seriesHechas, ejercicios, points, habitsDone, perfect }: Props) {
+export function Celebration({
+  seriesHechas,
+  ejercicios,
+  points,
+  habitsDone,
+  perfect,
+  volumenKg = 0,
+  prs = [],
+}: Props) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-ink px-8 text-center">
       {/* halo */}
@@ -38,7 +50,28 @@ export function Celebration({ seriesHechas, ejercicios, points, habitsDone, perf
       </h1>
       <p className="mt-2 animate-fade-up text-sm text-zinc-500 [animation-delay:120ms]">
         {seriesHechas} series · {ejercicios} ejercicios
+        {volumenKg > 0 && (
+          <>
+            {' · '}
+            <span className="font-semibold text-zinc-300">
+              {formatKg(volumenKg)} movidos
+            </span>
+          </>
+        )}
       </p>
+
+      {prs.length > 0 && (
+        <div className="mt-4 flex animate-fade-up flex-col gap-1.5 [animation-delay:180ms]">
+          {prs.map((pr) => (
+            <p
+              key={`${pr.nombre}${pr.peso}`}
+              className="rounded-full border border-accent/40 bg-accent/10 px-4 py-1.5 text-sm font-semibold text-accent"
+            >
+              PR · {pr.nombre} · {pr.peso} kg (+{pr.delta})
+            </p>
+          ))}
+        </div>
+      )}
 
       <div className="mt-8 flex animate-fade-up items-end gap-8 [animation-delay:240ms]">
         <div>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useRoutine } from '../hooks/useRoutine'
@@ -6,10 +6,12 @@ import { supabase } from '../lib/supabase'
 import { isoWeekday, localDateStr } from '../lib/days'
 import { dailyPoints } from '../lib/score'
 import { uploadExercisePhoto } from '../lib/media'
+import { maxPorEjercicio, formatKg } from '../lib/stats'
 import type { RoutineItem } from '../types'
 import { ExerciseMedia } from '../components/media/ExerciseMedia'
 import { RestTimer } from '../components/workout/RestTimer'
 import { Celebration } from '../components/workout/Celebration'
+import { PrToast, type PrEvent } from '../components/workout/PrToast'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
 
@@ -36,6 +38,35 @@ export function WorkoutPage() {
     perfect: boolean
   } | null>(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
+
+  // Récords personales: máximos históricos (antes de hoy) por ejercicio
+  const [histMax, setHistMax] = useState<Map<string, number>>(new Map())
+  const [prs, setPrs] = useState<PrEvent[]>([])
+  const [prToast, setPrToast] = useState<PrEvent | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    void (async () => {
+      const hoyStr = localDateStr()
+      const [sl, edl] = await Promise.all([
+        supabase.from('set_logs').select('exercise_id, fecha, peso_usado').lt('fecha', hoyStr),
+        supabase.from('exercise_day_logs').select('exercise_id, fecha, peso').lt('fecha', hoyStr),
+      ])
+      const registros = [
+        ...(sl.data ?? []).map((r) => ({
+          exercise_id: r.exercise_id as string,
+          fecha: r.fecha as string,
+          peso: r.peso_usado as number | null,
+        })),
+        ...(edl.data ?? []).map((r) => ({
+          exercise_id: r.exercise_id as string,
+          fecha: r.fecha as string,
+          peso: r.peso as number | null,
+        })),
+      ]
+      setHistMax(new Map([...maxPorEjercicio(registros)].map(([k, v]) => [k, v.peso])))
+    })()
+  }, [user])
 
   const day = rutina.days.find((d) => d.weekday === hoy) ?? null
   const items = useMemo(
@@ -76,6 +107,19 @@ export function WorkoutPage() {
 
   const totalSeries = items.reduce((acc, it) => acc + it.series, 0)
   const seriesHechas = Object.values(hechas).flat().filter(Boolean).length
+  const volumenSesion = Math.round(
+    items.reduce((acc, it) => {
+      const checks = (hechas[it.id] ?? []).filter(Boolean).length
+      if (!checks) return acc
+      const pesoStr = (pesos[it.id] ?? (it.peso != null ? String(it.peso) : ''))
+        .trim()
+        .replace(',', '.')
+      const p = parseFloat(pesoStr)
+      const reps = parseInt(it.reps, 10)
+      if (Number.isNaN(p) || !reps) return acc
+      return acc + checks * p * reps
+    }, 0),
+  )
   const enCardio = idx >= items.length && cardioHoy.length > 0
   const item: RoutineItem | undefined = items[idx]
 
@@ -89,6 +133,21 @@ export function WorkoutPage() {
       setTimer((t) => ({ seconds: it.descanso_seg, runKey: (t?.runKey ?? 0) + 1 }))
       const pesoStr = (pesos[it.id] ?? (it.peso != null ? String(it.peso) : '')).trim()
       const peso = pesoStr === '' ? null : parseFloat(pesoStr.replace(',', '.'))
+
+      // ¿Récord personal? Solo si ya había un máximo previo que superar
+      if (peso != null && !Number.isNaN(peso)) {
+        const previo = histMax.get(it.exercise_id)
+        if (previo != null && peso > previo) {
+          const pr: PrEvent = {
+            nombre: it.exercise.nombre,
+            peso,
+            delta: Math.round((peso - previo) * 100) / 100,
+          }
+          setHistMax((m) => new Map(m).set(it.exercise_id, peso))
+          setPrs((p) => [...p, pr])
+          setPrToast(pr)
+        }
+      }
       // .then() es imprescindible: el builder de supabase-js es lazy y sin
       // await/then la petición no llega a lanzarse
       supabase
@@ -154,6 +213,8 @@ export function WorkoutPage() {
         points={celebracion.points}
         habitsDone={celebracion.habitsDone}
         perfect={celebracion.perfect}
+        volumenKg={volumenSesion}
+        prs={prs}
       />
     )
   }
@@ -174,6 +235,7 @@ export function WorkoutPage() {
             </p>
             <p className="text-[11px] text-zinc-500">
               {seriesHechas}/{totalSeries} series
+              {volumenSesion > 0 && ` · ${formatKg(volumenSesion)}`}
             </p>
           </div>
           <span className="w-9" />
@@ -378,6 +440,8 @@ export function WorkoutPage() {
           </div>
         )}
       </main>
+
+      {prToast && <PrToast pr={prToast} onDone={() => setPrToast(null)} />}
 
       {timer && (
         <RestTimer
