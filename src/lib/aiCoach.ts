@@ -1,5 +1,5 @@
-import { supabase } from './supabase'
 import { localDateStr } from './days'
+import { invokeFunction } from './functions'
 
 const CACHE_KEY = 'habits:analisis-ia'
 
@@ -19,40 +19,16 @@ export function analisisGuardado(): AnalisisIA | null {
   }
 }
 
-const esNoDesplegada = (msg: string) => /not found|404|Failed to send/i.test(msg)
-
 /**
  * Pide el análisis a la Edge Function (que llama a Claude con la clave
- * guardada como secreto en Supabase). Prueba primero el slug ai-coach y,
- * si no existe, cae a quick-api (el slug por defecto del editor del
- * dashboard). Devuelve el texto y lo cachea en el dispositivo con la fecha.
+ * guardada como secreto en Supabase). Devuelve el texto y lo cachea en el
+ * dispositivo con la fecha.
  */
 export async function pedirAnalisisIA(resumen: Record<string, unknown>): Promise<AnalisisIA> {
-  let { data, error } = await supabase.functions.invoke('ai-coach', {
-    body: { resumen },
-  })
-  if (error && esNoDesplegada(error.message ?? '')) {
-    ;({ data, error } = await supabase.functions.invoke('quick-api', {
-      body: { resumen },
-    }))
-  }
-
-  if (error) {
-    // Sin cuerpo útil: función sin desplegar, sin sesión o error de red
-    const msg = error.message ?? ''
-    if (esNoDesplegada(msg)) {
-      throw new Error(
-        'La función ai-coach no está desplegada todavía en Supabase (Edge Functions).',
-      )
-    }
-    throw new Error(msg || 'No se pudo contactar con el coach IA.')
-  }
-
-  const cuerpo = data as { analisis?: string; error?: string } | null
+  const cuerpo = await invokeFunction<{ analisis?: string; error?: string }>({ resumen })
   if (!cuerpo?.analisis) {
     throw new Error(cuerpo?.error ?? 'Respuesta vacía del coach IA.')
   }
-
   const resultado: AnalisisIA = { texto: cuerpo.analisis, fecha: localDateStr() }
   localStorage.setItem(CACHE_KEY, JSON.stringify(resultado))
   return resultado

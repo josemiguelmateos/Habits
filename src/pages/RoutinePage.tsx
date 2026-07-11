@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useRoutine } from '../hooks/useRoutine'
-import { importInitialRoutine } from '../lib/importRoutine'
+import {
+  importInitialRoutine,
+  importRoutineData,
+  validateRutinaJson,
+} from '../lib/importRoutine'
 import { supabase } from '../lib/supabase'
 import { isoWeekday } from '../lib/days'
 import type { CardioSession, RoutineDay, RoutineItem } from '../types'
@@ -10,10 +14,21 @@ import { Button } from '../components/ui/Button'
 import { DayCard } from '../components/routine/DayCard'
 import { ExerciseSheet } from '../components/routine/ExerciseSheet'
 import { AddExerciseSheet } from '../components/routine/AddExerciseSheet'
-import { ImportJsonSheet } from '../components/routine/ImportJsonSheet'
+import { ImportSheet } from '../components/import/ImportSheet'
 import { CardioSheet } from '../components/routine/CardioSheet'
 
 const BLANK_KEY = 'habits:empezar-en-blanco'
+
+const EJEMPLO_RUTINA = `{
+  "ejercicios": {
+    "press_banca": { "nombre": "Press banca", "grupo": "Pecho" }
+  },
+  "rutina": [
+    { "dia": "lunes", "titulo": "Torso", "items": [
+      { "ejercicio": "press_banca", "orden": 1, "series": 4, "reps": "10", "descanso_seg": 90 }
+    ]}
+  ]
+}`
 
 export function RoutinePage() {
   const { user } = useAuth()
@@ -92,7 +107,7 @@ export function RoutinePage() {
               {importando ? 'Importando…' : 'Importar rutina de ejemplo'}
             </Button>
             <Button variant="secondary" onClick={() => setJsonAbierto(true)}>
-              Pegar mi rutina (JSON)
+              Importar archivo (PDF, Excel o JSON)
             </Button>
             <Button
               variant="ghost"
@@ -110,10 +125,14 @@ export function RoutinePage() {
             </p>
           )}
         </div>
-        <ImportJsonSheet
+        <ImportSheet
           open={jsonAbierto}
           onClose={() => setJsonAbierto(false)}
           onChanged={() => void rutina.reload()}
+          tipo="rutina"
+          ejemplo={EJEMPLO_RUTINA}
+          validate={validateRutinaJson}
+          importData={importRoutineData}
         />
       </>
     )

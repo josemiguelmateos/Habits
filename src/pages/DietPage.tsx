@@ -1,16 +1,29 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDiet } from '../hooks/useDiet'
-import { importInitialDiet } from '../lib/importDiet'
+import { importDietData, importInitialDiet, validateDietaJson } from '../lib/importDiet'
 import { supabase } from '../lib/supabase'
 import { isoWeekday, WEEKDAY_NAMES } from '../lib/days'
 import type { DietMealFull } from '../types'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
-import { ImportDietSheet } from '../components/diet/ImportDietSheet'
+import { ImportSheet } from '../components/import/ImportSheet'
 import { ShoppingListSheet } from '../components/diet/ShoppingListSheet'
 
 const BLANK_KEY = 'habits:dieta-en-blanco'
+
+const EJEMPLO_DIETA = `{
+  "objetivo": "Volumen",
+  "kcal": 2500,
+  "comidas": [
+    { "dias": [1, 3, 5], "slot": "Comida", "orden": 1,
+      "descripcion": "250 g arroz + pollo + verdura",
+      "items": [
+        { "nombre": "Arroz", "categoria": "Hidratos", "cantidad": 250, "unidad": "g" },
+        { "nombre": "Pollo", "categoria": "Proteínas", "cantidad": 150, "unidad": "g" }
+      ] }
+  ]
+}`
 
 export function DietPage() {
   const { user } = useAuth()
@@ -94,7 +107,7 @@ export function DietPage() {
               {importando ? 'Importando…' : 'Importar dieta de ejemplo'}
             </Button>
             <Button variant="secondary" onClick={() => setJsonAbierto(true)}>
-              Pegar mi dieta (JSON)
+              Importar archivo (PDF, Excel o JSON)
             </Button>
             <Button
               variant="ghost"
@@ -112,10 +125,14 @@ export function DietPage() {
             </p>
           )}
         </div>
-        <ImportDietSheet
+        <ImportSheet
           open={jsonAbierto}
           onClose={() => setJsonAbierto(false)}
           onChanged={() => void dieta.reload()}
+          tipo="dieta"
+          ejemplo={EJEMPLO_DIETA}
+          validate={validateDietaJson}
+          importData={importDietData}
         />
       </>
     )
