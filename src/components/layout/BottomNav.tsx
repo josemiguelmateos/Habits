@@ -36,6 +36,16 @@ const items: Item[] = [
     ),
   },
   {
+    to: '/dieta',
+    label: 'Dieta',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...stroke}>
+        <path d="M5 3v7a2 2 0 0 0 4 0V3M7 10v11" />
+        <path d="M16 3c-1.5 0-2.5 1.8-2.5 4.5S14.5 12 16 12v9" />
+      </svg>
+    ),
+  },
+  {
     to: '/calendario',
     label: 'Calendario',
     icon: (
@@ -76,7 +86,7 @@ export function BottomNav() {
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) =>
-              `flex min-w-16 flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
+              `flex min-w-0 flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
                 isActive ? 'text-accent' : 'text-zinc-500 hover:text-zinc-300'
               }`
             }

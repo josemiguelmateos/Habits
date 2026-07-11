@@ -66,6 +66,37 @@ export interface SetLog {
   peso_usado: number | null
 }
 
+export interface DietMeal {
+  id: string
+  user_id: string
+  dias: number[]
+  slot: string
+  orden: number
+  descripcion: string
+}
+
+export interface DietMealItem {
+  id: string
+  user_id: string
+  meal_id: string
+  nombre: string
+  categoria: string | null
+  cantidad: number | null
+  unidad: string | null
+}
+
+export interface DietMeta {
+  user_id: string
+  objetivo: string | null
+  kcal: number | null
+  notas: string | null
+}
+
+/** Comida con sus items ya resueltos (join en cliente). */
+export interface DietMealFull extends DietMeal {
+  items: DietMealItem[]
+}
+
 /** Registro por ejercicio y fecha (kg reales del día + nota). Migración 0003. */
 export interface ExerciseDayLog {
   id: string

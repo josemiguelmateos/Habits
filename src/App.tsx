@@ -8,6 +8,7 @@ import { SignupPage } from './pages/auth/SignupPage'
 import { HomePage } from './pages/HomePage'
 import { WorkoutPage } from './pages/WorkoutPage'
 import { RoutinePage } from './pages/RoutinePage'
+import { DietPage } from './pages/DietPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SetupPage } from './pages/SetupPage'
@@ -34,6 +35,7 @@ export default function App() {
             <Route element={<AppShell />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/rutina" element={<RoutinePage />} />
+              <Route path="/dieta" element={<DietPage />} />
               <Route path="/calendario" element={<CalendarPage />} />
               <Route
                 path="/progreso"

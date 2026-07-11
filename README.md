@@ -12,6 +12,7 @@ App personal de seguimiento y gamificación de hábitos diarios: **entrenamiento
 - **Media por ejercicio**: vídeo de YouTube (pega el enlace del botón compartir, con soporte de marca de tiempo `t=1m30s`) con embed ligero que no carga el iframe hasta tocar, o foto propia hecha en el gimnasio (comprimida en el móvil antes de subir). Contador de biblioteca "X/38 con demostración".
 - **Modo entrenamiento**: ejercicio a ejercicio, checkboxes por serie, registro de peso, temporizador de descanso con aviso, bloque de cardio y celebración final.
 - **Registro diario**: anillo de hidratación con botones rápidos configurables (auto-cumplido al llegar al objetivo), sueño (auto-cumplido según tu meta), dieta y ejercicio. Calendario mensual con panel por día: hábitos + kg y notas por ejercicio y fecha.
+- **Dieta semanal**: importa tu dieta (ejemplo, JSON propio o en blanco) y cada día ves las comidas que tocan. La **lista de la compra** se calcula sola sumando el bruto de cada ingrediente por los días que aparece en la semana; se puede ir tachando en el súper.
 - **Progreso**: rachas con día de gracia (un fallo no rompe la racha si los 6 días anteriores están cumplidos), % de cumplimiento 7/30/90, heatmap tipo GitHub, gráficas de agua/sueño/cargas y logros.
 
 ## Puesta en marcha desde cero
@@ -24,6 +25,7 @@ App personal de seguimiento y gamificación de hábitos diarios: **entrenamiento
    2. `0002_storage_bucket.sql` (bucket privado de fotos)
    3. `0003_exercise_day_logs.sql` (diario de kg/notas por ejercicio)
    4. `0004_friends.sql` (modo amigos: grupos, códigos de invitación y leaderboard)
+   5. `0005_diet.sql` (dieta semanal: comidas por día + lista de la compra)
 3. **Authentication → Sign In / Providers → Email**: desactiva **Confirm email** (el email gratuito de Supabase tiene un límite muy bajo y para 2-4 usuarios no compensa).
 4. **Project Settings → API**: copia la **Project URL** y la clave **anon / publishable**.
 

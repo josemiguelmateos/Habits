@@ -1,0 +1,316 @@
+{
+  "objetivo": "Volumen (proteína optimizada)",
+  "kcal": 2530,
+  "notas": "Media L-V: 179 g proteína (2,5 g/kg) · 316 g carbos · 70 g grasa. Cocina plancha/horno/vapor. Creatina TODOS los días. Evordx solo mañana/mediodía en días de gym; Red Bull y Evordx nunca el mismo día. Omega-3 con una comida con grasa.",
+  "comidas": [
+    {
+      "dias": [1, 2, 3, 4, 5, 6, 7],
+      "slot": "Desayuno",
+      "orden": 1,
+      "descripcion": "Tortitas: 150 ml claras + 1 huevo + 45 g harina de avena · 15 g crema de cacahuete · 1 fruta · café/té sin azúcar",
+      "items": [
+        { "nombre": "Claras de huevo", "categoria": "Huevos y lácteos", "cantidad": 150, "unidad": "ml" },
+        { "nombre": "Huevos", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Harina de avena", "categoria": "Hidratos", "cantidad": 45, "unidad": "g" },
+        { "nombre": "Crema de cacahuete 100%", "categoria": "Otros", "cantidad": 15, "unidad": "g" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" }
+      ]
+    },
+    {
+      "dias": [1, 2, 3, 4, 5],
+      "slot": "Post-entreno",
+      "orden": 2,
+      "descripcion": "60 g copos de maíz s/a + 30 g proteína ISO + 250 ml leche de soja s/a",
+      "items": [
+        { "nombre": "Copos de maíz s/a", "categoria": "Hidratos", "cantidad": 60, "unidad": "g" },
+        { "nombre": "Proteína ISO", "categoria": "Proteínas", "cantidad": 30, "unidad": "g" },
+        { "nombre": "Leche de soja s/a", "categoria": "Huevos y lácteos", "cantidad": 250, "unidad": "ml" }
+      ]
+    },
+    {
+      "dias": [1, 2, 3, 4, 5, 6, 7],
+      "slot": "Verdura fija",
+      "orden": 9,
+      "descripcion": "Comida: tomate en rodajas · Cena: canónigos/lechuga + pepino",
+      "items": [
+        { "nombre": "Tomate", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Canónigos/lechuga", "categoria": "Fruta y verdura", "cantidad": null, "unidad": null },
+        { "nombre": "Pepino", "categoria": "Fruta y verdura", "cantidad": null, "unidad": null }
+      ]
+    },
+    {
+      "dias": [1],
+      "slot": "Comida",
+      "orden": 3,
+      "descripcion": "250 g arroz + 1 lata atún + verdura + 1 fruta",
+      "items": [
+        { "nombre": "Arroz", "categoria": "Hidratos", "cantidad": 250, "unidad": "g" },
+        { "nombre": "Atún en lata", "categoria": "Proteínas", "cantidad": 1, "unidad": "lata" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" }
+      ]
+    },
+    {
+      "dias": [1],
+      "slot": "Snack",
+      "orden": 4,
+      "descripcion": "Bocadillo integral (3 reb.) de pavo + tomate + 15 g frutos secos",
+      "items": [
+        { "nombre": "Pan integral", "categoria": "Hidratos", "cantidad": 3, "unidad": "rebanada" },
+        { "nombre": "Pavo en lonchas", "categoria": "Proteínas", "cantidad": 80, "unidad": "g" },
+        { "nombre": "Tomate", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Frutos secos", "categoria": "Otros", "cantidad": 15, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [1],
+      "slot": "Cena",
+      "orden": 5,
+      "descripcion": "350 g patata asada + tortilla de 2 huevos + verdura + 1 yogur proteico",
+      "items": [
+        { "nombre": "Patata", "categoria": "Hidratos", "cantidad": 350, "unidad": "g" },
+        { "nombre": "Huevos", "categoria": "Huevos y lácteos", "cantidad": 2, "unidad": "ud" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Yogur proteico", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" }
+      ]
+    },
+    {
+      "dias": [2],
+      "slot": "Comida",
+      "orden": 3,
+      "descripcion": "90 g pasta (crudo) + 150 g ternera magra a la plancha + verdura + 1 fruta",
+      "items": [
+        { "nombre": "Pasta", "categoria": "Hidratos", "cantidad": 90, "unidad": "g" },
+        { "nombre": "Ternera magra", "categoria": "Proteínas", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" }
+      ]
+    },
+    {
+      "dias": [2],
+      "slot": "Snack",
+      "orden": 4,
+      "descripcion": "Bocadillo de tortilla (2 claras + 1 huevo) + 15 g frutos secos",
+      "items": [
+        { "nombre": "Pan integral", "categoria": "Hidratos", "cantidad": 2, "unidad": "rebanada" },
+        { "nombre": "Claras de huevo", "categoria": "Huevos y lácteos", "cantidad": 70, "unidad": "ml" },
+        { "nombre": "Huevos", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Frutos secos", "categoria": "Otros", "cantidad": 15, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [2],
+      "slot": "Cena",
+      "orden": 5,
+      "descripcion": "220 g quinoa + 150 g requesón + verdura + 1 yogur proteico",
+      "items": [
+        { "nombre": "Quinoa", "categoria": "Hidratos", "cantidad": 220, "unidad": "g" },
+        { "nombre": "Requesón", "categoria": "Huevos y lácteos", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Yogur proteico", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" }
+      ]
+    },
+    {
+      "dias": [3],
+      "slot": "Comida",
+      "orden": 3,
+      "descripcion": "250 g arroz + 200 g merluza a la plancha + verdura + 1 fruta",
+      "items": [
+        { "nombre": "Arroz", "categoria": "Hidratos", "cantidad": 250, "unidad": "g" },
+        { "nombre": "Merluza", "categoria": "Proteínas", "cantidad": 200, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" }
+      ]
+    },
+    {
+      "dias": [3],
+      "slot": "Snack",
+      "orden": 4,
+      "descripcion": "Bocadillo integral (3 reb.) de pavo + tomate + 15 g frutos secos",
+      "items": [
+        { "nombre": "Pan integral", "categoria": "Hidratos", "cantidad": 3, "unidad": "rebanada" },
+        { "nombre": "Pavo en lonchas", "categoria": "Proteínas", "cantidad": 80, "unidad": "g" },
+        { "nombre": "Tomate", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Frutos secos", "categoria": "Otros", "cantidad": 15, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [3],
+      "slot": "Cena",
+      "orden": 5,
+      "descripcion": "350 g boniato + boloñesa de 40 g soja texturizada + verdura + 1 yogur proteico",
+      "items": [
+        { "nombre": "Boniato", "categoria": "Hidratos", "cantidad": 350, "unidad": "g" },
+        { "nombre": "Soja texturizada", "categoria": "Proteínas", "cantidad": 40, "unidad": "g" },
+        { "nombre": "Tomate triturado", "categoria": "Fruta y verdura", "cantidad": 100, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Yogur proteico", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" }
+      ]
+    },
+    {
+      "dias": [4],
+      "slot": "Comida",
+      "orden": 3,
+      "descripcion": "90 g pasta (crudo) + 2 huevos + verdura + 1 fruta",
+      "items": [
+        { "nombre": "Pasta", "categoria": "Hidratos", "cantidad": 90, "unidad": "g" },
+        { "nombre": "Huevos", "categoria": "Huevos y lácteos", "cantidad": 2, "unidad": "ud" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" }
+      ]
+    },
+    {
+      "dias": [4],
+      "slot": "Snack",
+      "orden": 4,
+      "descripcion": "Bocadillo de tortilla (2 claras + 1 huevo) + 15 g frutos secos",
+      "items": [
+        { "nombre": "Pan integral", "categoria": "Hidratos", "cantidad": 2, "unidad": "rebanada" },
+        { "nombre": "Claras de huevo", "categoria": "Huevos y lácteos", "cantidad": 70, "unidad": "ml" },
+        { "nombre": "Huevos", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Frutos secos", "categoria": "Otros", "cantidad": 15, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [4],
+      "slot": "Cena",
+      "orden": 5,
+      "descripcion": "350 g patata + 130 g pollo a la plancha + verdura + 1 yogur proteico",
+      "items": [
+        { "nombre": "Patata", "categoria": "Hidratos", "cantidad": 350, "unidad": "g" },
+        { "nombre": "Pollo", "categoria": "Proteínas", "cantidad": 130, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Yogur proteico", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" }
+      ]
+    },
+    {
+      "dias": [5],
+      "slot": "Comida",
+      "orden": 3,
+      "descripcion": "250 g arroz + 40 g soja texturizada salteada + verdura + 1 fruta",
+      "items": [
+        { "nombre": "Arroz", "categoria": "Hidratos", "cantidad": 250, "unidad": "g" },
+        { "nombre": "Soja texturizada", "categoria": "Proteínas", "cantidad": 40, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" }
+      ]
+    },
+    {
+      "dias": [5],
+      "slot": "Snack",
+      "orden": 4,
+      "descripcion": "Bocadillo integral (3 reb.) de pavo + tomate + 15 g frutos secos",
+      "items": [
+        { "nombre": "Pan integral", "categoria": "Hidratos", "cantidad": 3, "unidad": "rebanada" },
+        { "nombre": "Pavo en lonchas", "categoria": "Proteínas", "cantidad": 80, "unidad": "g" },
+        { "nombre": "Tomate", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Frutos secos", "categoria": "Otros", "cantidad": 15, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [5],
+      "slot": "Cena",
+      "orden": 5,
+      "descripcion": "220 g quinoa + 180 g salmón al horno + verdura + 1 yogur proteico",
+      "items": [
+        { "nombre": "Quinoa", "categoria": "Hidratos", "cantidad": 220, "unidad": "g" },
+        { "nombre": "Salmón", "categoria": "Proteínas", "cantidad": 180, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Yogur proteico", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" }
+      ]
+    },
+    {
+      "dias": [6],
+      "slot": "Media mañana",
+      "orden": 3,
+      "descripcion": "Bocadillo de tortilla francesa (2 claras + 1 huevo) + 1 plátano",
+      "items": [
+        { "nombre": "Pan integral", "categoria": "Hidratos", "cantidad": 2, "unidad": "rebanada" },
+        { "nombre": "Claras de huevo", "categoria": "Huevos y lácteos", "cantidad": 70, "unidad": "ml" },
+        { "nombre": "Huevos", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Plátano", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" }
+      ]
+    },
+    {
+      "dias": [6],
+      "slot": "Comida",
+      "orden": 4,
+      "descripcion": "Ensalada de arroz: 250 g arroz + 2 latas atún + tomate/pimiento + AOVE (tupper)",
+      "items": [
+        { "nombre": "Arroz", "categoria": "Hidratos", "cantidad": 250, "unidad": "g" },
+        { "nombre": "Atún en lata", "categoria": "Proteínas", "cantidad": 2, "unidad": "lata" },
+        { "nombre": "Tomate", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Pimiento", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "AOVE", "categoria": "Otros", "cantidad": 15, "unidad": "ml" }
+      ]
+    },
+    {
+      "dias": [6],
+      "slot": "Media tarde",
+      "orden": 5,
+      "descripcion": "1 barrita proteica + 1 fruta + 30 g frutos secos",
+      "items": [
+        { "nombre": "Barrita proteica", "categoria": "Proteínas", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" },
+        { "nombre": "Frutos secos", "categoria": "Otros", "cantidad": 30, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [6],
+      "slot": "Cena",
+      "orden": 6,
+      "descripcion": "350 g patata + tortilla de 2 huevos + verdura + 1 yogur proteico",
+      "items": [
+        { "nombre": "Patata", "categoria": "Hidratos", "cantidad": 350, "unidad": "g" },
+        { "nombre": "Huevos", "categoria": "Huevos y lácteos", "cantidad": 2, "unidad": "ud" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Yogur proteico", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" }
+      ]
+    },
+    {
+      "dias": [7],
+      "slot": "Media mañana",
+      "orden": 3,
+      "descripcion": "Bocadillo integral de pavo + 1 fruta",
+      "items": [
+        { "nombre": "Pan integral", "categoria": "Hidratos", "cantidad": 3, "unidad": "rebanada" },
+        { "nombre": "Pavo en lonchas", "categoria": "Proteínas", "cantidad": 80, "unidad": "g" },
+        { "nombre": "Fruta", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "pieza" }
+      ]
+    },
+    {
+      "dias": [7],
+      "slot": "Comida",
+      "orden": 4,
+      "descripcion": "Pasta (90 g crudo) con boloñesa de soja (40 g) — hecha el sábado",
+      "items": [
+        { "nombre": "Pasta", "categoria": "Hidratos", "cantidad": 90, "unidad": "g" },
+        { "nombre": "Soja texturizada", "categoria": "Proteínas", "cantidad": 40, "unidad": "g" },
+        { "nombre": "Tomate triturado", "categoria": "Fruta y verdura", "cantidad": 100, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [7],
+      "slot": "Media tarde",
+      "orden": 5,
+      "descripcion": "1 barrita proteica + 1 plátano + 30 g frutos secos",
+      "items": [
+        { "nombre": "Barrita proteica", "categoria": "Proteínas", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Plátano", "categoria": "Fruta y verdura", "cantidad": 1, "unidad": "ud" },
+        { "nombre": "Frutos secos", "categoria": "Otros", "cantidad": 30, "unidad": "g" }
+      ]
+    },
+    {
+      "dias": [7],
+      "slot": "Cena",
+      "orden": 6,
+      "descripcion": "350 g boniato + 130 g pollo a la plancha + verdura + 1 yogur proteico",
+      "items": [
+        { "nombre": "Boniato", "categoria": "Hidratos", "cantidad": 350, "unidad": "g" },
+        { "nombre": "Pollo", "categoria": "Proteínas", "cantidad": 130, "unidad": "g" },
+        { "nombre": "Verdura cocida", "categoria": "Fruta y verdura", "cantidad": 150, "unidad": "g" },
+        { "nombre": "Yogur proteico", "categoria": "Huevos y lácteos", "cantidad": 1, "unidad": "ud" }
+      ]
+    }
+  ]
+}

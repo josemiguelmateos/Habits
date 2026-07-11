@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useRoutine } from '../hooks/useRoutine'
+import { useDiet } from '../hooks/useDiet'
 import { useProfile } from '../hooks/useProfile'
 import { useDailyLog } from '../hooks/useDailyLog'
 import { isoWeekday, localDateStr } from '../lib/days'
@@ -25,6 +26,7 @@ const HABITOS = [
 export function HomePage() {
   const { user } = useAuth()
   const rutina = useRoutine()
+  const dieta = useDiet()
   const { profile } = useProfile()
   const dia = useDailyLog(
     profile?.water_goal_ml ?? null,
@@ -65,6 +67,7 @@ export function HomePage() {
     (user?.user_metadata?.nombre as string | undefined)?.split(' ')[0]
   const hoy = isoWeekday()
 
+  const comidasHoy = dieta.mealsForDay(hoy)
   const dayHoy = rutina.days.find((d) => d.weekday === hoy) ?? null
   const cardioHoy = rutina.cardio.filter((c) => c.weekday === hoy)
   const itemsHoy = dayHoy ? (rutina.itemsByDay.get(dayHoy.id) ?? []) : []
@@ -178,6 +181,33 @@ export function HomePage() {
             </span>
           </Link>
         ) : null)}
+
+      {/* Comidas de hoy */}
+      {!dieta.loading && comidasHoy.length > 0 && (
+        <Link
+          to="/dieta"
+          className="card group flex animate-fade-up items-center justify-between px-5 py-4 transition-colors hover:border-accent/50 [animation-delay:60ms]"
+        >
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Comidas de hoy
+            </p>
+            <p className="mt-1 truncate font-display text-base font-semibold">
+              {comidasHoy.map((m) => m.slot).join(' · ')}
+            </p>
+            <p className="mt-0.5 text-sm text-zinc-500">
+              {comidasHoy.length} comidas
+              {dieta.meta?.kcal != null ? ` · ~${dieta.meta.kcal} kcal` : ''}
+            </p>
+          </div>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink-raised text-accent">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 3v7a2 2 0 0 0 4 0V3M7 10v11" />
+              <path d="M16 3c-1.5 0-2.5 1.8-2.5 4.5S14.5 12 16 12v9" />
+            </svg>
+          </span>
+        </Link>
+      )}
 
       {/* Hidratación */}
       <div className="animate-fade-up [animation-delay:80ms]">
