@@ -18,6 +18,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { CardioSession, RoutineDay, RoutineItem } from '../../types'
 import { WEEKDAY_NAMES } from '../../lib/days'
 import { supabase } from '../../lib/supabase'
+import { Sparkline } from '../exercise/Sparkline'
 
 interface Props {
   weekday: number
@@ -25,6 +26,7 @@ interface Props {
   items: RoutineItem[]
   cardio: CardioSession[]
   soloPendientes: boolean
+  sparklines: Map<string, number[]>
   onReorder: (dayId: string, orderedIds: string[]) => void
   onOpenItem: (item: RoutineItem) => void
   onAdd: (day: RoutineDay) => void
@@ -40,6 +42,7 @@ export function DayCard({
   items,
   cardio,
   soloPendientes,
+  sparklines,
   onReorder,
   onOpenItem,
   onAdd,
@@ -132,6 +135,7 @@ export function DayCard({
                       key={it.id}
                       item={it}
                       dragEnabled={!soloPendientes}
+                      sparkValues={sparklines.get(it.exercise_id) ?? []}
                       onOpen={() => onOpenItem(it)}
                       onPesoChanged={onPesoChanged}
                     />
@@ -190,11 +194,13 @@ export function DayCard({
 function SortableRow({
   item,
   dragEnabled,
+  sparkValues,
   onOpen,
   onPesoChanged,
 }: {
   item: RoutineItem
   dragEnabled: boolean
+  sparkValues: number[]
   onOpen: () => void
   onPesoChanged: () => void
 }) {
@@ -239,6 +245,7 @@ function SortableRow({
           </span>
         </span>
       </button>
+      <Sparkline values={sparkValues} width={56} height={20} className="shrink-0" />
       <PesoChip item={item} onChanged={onPesoChanged} />
     </li>
   )

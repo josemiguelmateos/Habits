@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useRoutine } from '../hooks/useRoutine'
@@ -9,6 +9,8 @@ import {
 } from '../lib/importRoutine'
 import { supabase } from '../lib/supabase'
 import { isoWeekday } from '../lib/days'
+import { sparklineSeries } from '../lib/sparkline'
+import type { SetLike, PesoFecha } from '../lib/stats'
 import type { CardioSession, RoutineDay, RoutineItem } from '../types'
 import { Button } from '../components/ui/Button'
 import { DayCard } from '../components/routine/DayCard'
@@ -42,8 +44,36 @@ export function RoutinePage() {
   const [cardioEdit, setCardioEdit] = useState<CardioSession | null>(null)
   const [cardioNuevoDia, setCardioNuevoDia] = useState<number | null>(null)
   const [enBlanco, setEnBlanco] = useState(() => localStorage.getItem(BLANK_KEY) === '1')
+  const [sparklines, setSparklines] = useState<Map<string, number[]>>(new Map())
 
   const hoy = isoWeekday()
+
+  useEffect(() => {
+    if (!user) return
+    void (async () => {
+      const [sl, edl] = await Promise.all([
+        supabase.from('set_logs').select('exercise_id, fecha, reps_hechas, peso_usado'),
+        supabase.from('exercise_day_logs').select('exercise_id, fecha, peso'),
+      ])
+      const setsByEx = new Map<string, SetLike[]>()
+      for (const r of (sl.data ?? []) as SetLike[]) {
+        const a = setsByEx.get(r.exercise_id) ?? []
+        a.push(r)
+        setsByEx.set(r.exercise_id, a)
+      }
+      const daysByEx = new Map<string, PesoFecha[]>()
+      for (const r of (edl.data ?? []) as PesoFecha[]) {
+        const a = daysByEx.get(r.exercise_id) ?? []
+        a.push(r)
+        daysByEx.set(r.exercise_id, a)
+      }
+      const m = new Map<string, number[]>()
+      for (const id of new Set([...setsByEx.keys(), ...daysByEx.keys()])) {
+        m.set(id, sparklineSeries(setsByEx.get(id) ?? [], daysByEx.get(id) ?? []).values)
+      }
+      setSparklines(m)
+    })()
+  }, [user])
 
   // Mantén la ficha abierta sincronizada tras un reload
   const abiertoActual = useMemo(() => {
@@ -247,6 +277,7 @@ export function RoutinePage() {
             items={day ? (rutina.itemsByDay.get(day.id) ?? []) : []}
             cardio={rutina.cardio.filter((c) => c.weekday === wd)}
             soloPendientes={soloPendientes}
+            sparklines={sparklines}
             onReorder={(dayId, ids) => void rutina.reorderDay(dayId, ids)}
             onOpenItem={setAbierto}
             onAdd={setAnadiendoA}
