@@ -1,4 +1,5 @@
 import { invokeFunction } from './functions'
+import { PROMPT_DIETA, PROMPT_RUTINA } from './importPrompts'
 
 export type ExtraidoDoc =
   | { formato: 'pdf'; pdf_base64: string }
@@ -61,7 +62,13 @@ export async function convertirDocumento(
   tipo: 'rutina' | 'dieta',
   ex: ExtraidoDoc,
 ): Promise<unknown> {
-  const body: Record<string, unknown> = { accion: 'importar', tipo, formato: ex.formato }
+  const body: Record<string, unknown> = {
+    accion: 'importar',
+    tipo,
+    formato: ex.formato,
+    // Instrucciones para la IA desde el frontend: afinar sin redeplegar.
+    system: tipo === 'rutina' ? PROMPT_RUTINA : PROMPT_DIETA,
+  }
   if (ex.formato === 'pdf') body.pdf_base64 = ex.pdf_base64
   else body.contenido = ex.contenido
 

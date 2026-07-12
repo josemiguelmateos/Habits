@@ -72,7 +72,10 @@ Reglas CRÍTICAS:
 - "descripcion" es el texto de la comida tal como aparece en el documento.
 - "items" DEBE desglosar cada ingrediente con su cantidad y unidad, porque con eso se calcula la lista de la compra. Unidades típicas: "g", "ml", "ud", "pieza", "lata", "rebanada", "L". Si un ingrediente no lleva cantidad (p. ej. "verdura al gusto"), pon "cantidad": null y "unidad": null.
 - "categoria" de cada item debe ser EXACTAMENTE una de: "Proteínas", "Hidratos", "Fruta y verdura", "Huevos y lácteos", "Otros".
-- Extrae EXACTAMENTE lo que hay en el documento; no inventes comidas ni ingredientes. Si el documento trae su propia lista de la compra, IGNÓRALA: la app la recalcula sola desde los items.`;
+
+REGLA CLAVE — comidas con opciones o "escoge 1":
+Muchas dietas no fijan un menú por día, sino que dan opciones a elegir ("Proteína (escoge 1): pollo / pescado / tofu…", listas separadas por "/" o "o"). En esos casos NO repitas todas las opciones en todos los días. ELIGE TÚ una opción concreta para cada día y REPARTE las opciones a lo largo de la semana para dar variedad: genera una comida distinta por día (con "dias" de un solo día [1], [2], …), no repitas la misma elección dos días seguidos, y en "descripcion" e "items" pon SOLO la elección concreta de ese día (nunca la lista de opciones). Si una opción da un rango (150-200 g), usa un valor representativo. Las comidas fijas (menú único) se mantienen agrupando sus días.
+- Extrae lo que hay en el documento; no inventes comidas. Si el documento trae su propia lista de la compra, IGNÓRALA: la app la recalcula sola desde los items. Cada día debe mostrar un plan concreto y variado, nunca el mismo texto repetido.`;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -122,7 +125,14 @@ Deno.serve(async (req) => {
     if (tipo !== "rutina" && tipo !== "dieta") {
       return json({ error: "tipo debe ser 'rutina' o 'dieta'." }, 400);
     }
-    const system = tipo === "rutina" ? SCHEMA_RUTINA : SCHEMA_DIETA;
+    // La app envía sus propias instrucciones (para afinarlas sin redeploy);
+    // si no llegan, usamos el prompt integrado como respaldo.
+    const system =
+      typeof body.system === "string" && body.system.trim().length > 40
+        ? (body.system as string)
+        : tipo === "rutina"
+          ? SCHEMA_RUTINA
+          : SCHEMA_DIETA;
 
     let userContent: Anthropic.MessageParam["content"];
     if (body.formato === "pdf") {
@@ -147,7 +157,7 @@ Deno.serve(async (req) => {
     try {
       const response = await client.messages.create({
         model: MODEL,
-        max_tokens: 8000,
+        max_tokens: 12000,
         system,
         messages: [{ role: "user", content: userContent }],
       });
