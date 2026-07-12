@@ -29,6 +29,7 @@ export function WorkoutPage() {
   const [idx, setIdx] = useState(0)
   const [hechas, setHechas] = useState<Record<string, boolean[]>>({})
   const [pesos, setPesos] = useState<Record<string, string>>({})
+  const [repsHechas, setRepsHechas] = useState<Record<string, string>>({})
   const [timer, setTimer] = useState<TimerState | null>(null)
   const [cardioHecho, setCardioHecho] = useState(false)
   const [terminando, setTerminando] = useState(false)
@@ -105,6 +106,13 @@ export function WorkoutPage() {
     )
   }
 
+  // Reps reales del campo "Reps de hoy" (por defecto, el primer número del objetivo)
+  const repsDe = (it: RoutineItem): number => {
+    const raw = (repsHechas[it.id] ?? '').trim()
+    const n = raw === '' ? parseInt(it.reps, 10) : parseInt(raw, 10)
+    return Number.isNaN(n) ? 0 : n
+  }
+
   const totalSeries = items.reduce((acc, it) => acc + it.series, 0)
   const seriesHechas = Object.values(hechas).flat().filter(Boolean).length
   const volumenSesion = Math.round(
@@ -115,7 +123,7 @@ export function WorkoutPage() {
         .trim()
         .replace(',', '.')
       const p = parseFloat(pesoStr)
-      const reps = parseInt(it.reps, 10)
+      const reps = repsDe(it)
       if (Number.isNaN(p) || !reps) return acc
       return acc + checks * p * reps
     }, 0),
@@ -157,7 +165,7 @@ export function WorkoutPage() {
           exercise_id: it.exercise_id,
           fecha: localDateStr(),
           serie: serie + 1,
-          reps_hechas: parseInt(it.reps, 10) || null,
+          reps_hechas: repsDe(it) || null,
           peso_usado: peso != null && !Number.isNaN(peso) ? peso : null,
         })
         .then(({ error }) => {
@@ -289,22 +297,39 @@ export function WorkoutPage() {
               )}
             </div>
 
-            {/* Peso usado */}
-            <div className="mt-5 flex items-center gap-3">
-              <label className="text-sm font-medium text-zinc-400" htmlFor="peso-hoy">
-                Peso de hoy
-              </label>
-              <input
-                id="peso-hoy"
-                type="text"
-                inputMode="decimal"
-                placeholder={item.peso != null ? String(item.peso) : 'kg'}
-                value={pesos[item.id] ?? ''}
-                onChange={(e) => setPesos((p) => ({ ...p, [item.id]: e.target.value }))}
-                onBlur={() => void guardarPeso(item)}
-                className="w-24 rounded-xl border border-ink-border bg-ink-soft px-3 py-2.5 text-center font-display text-lg font-semibold text-zinc-100 outline-none focus:border-accent"
-              />
-              <span className="text-sm text-zinc-500">kg</span>
+            {/* Peso y reps de hoy (reales; se aplican a todas las series) */}
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-zinc-400" htmlFor="peso-hoy">
+                  Peso de hoy
+                </label>
+                <input
+                  id="peso-hoy"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder={item.peso != null ? String(item.peso) : 'kg'}
+                  value={pesos[item.id] ?? ''}
+                  onChange={(e) => setPesos((p) => ({ ...p, [item.id]: e.target.value }))}
+                  onBlur={() => void guardarPeso(item)}
+                  className="w-24 rounded-xl border border-ink-border bg-ink-soft px-3 py-2.5 text-center font-display text-lg font-semibold text-zinc-100 outline-none focus:border-accent"
+                />
+                <span className="text-sm text-zinc-500">kg</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-zinc-400" htmlFor="reps-hoy">
+                  Reps de hoy
+                </label>
+                <input
+                  id="reps-hoy"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={String(parseInt(item.reps, 10) || '')}
+                  value={repsHechas[item.id] ?? ''}
+                  onChange={(e) => setRepsHechas((r) => ({ ...r, [item.id]: e.target.value }))}
+                  className="w-20 rounded-xl border border-ink-border bg-ink-soft px-3 py-2.5 text-center font-display text-lg font-semibold text-zinc-100 outline-none focus:border-accent"
+                />
+                <span className="text-sm text-zinc-500">reps</span>
+              </div>
             </div>
 
             {/* Series */}

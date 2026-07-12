@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { RoutineItem, SetLog } from '../../types'
+import type { PesoFecha } from '../../lib/stats'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { parseYouTubeUrl, searchUrl } from '../../lib/youtube'
@@ -7,8 +8,12 @@ import { uploadExercisePhoto, deleteExercisePhoto } from '../../lib/media'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { Spinner } from '../ui/Spinner'
 import { YouTubeFacade } from '../media/YouTubeFacade'
 import { ExercisePhoto } from '../media/ExercisePhoto'
+
+// Recharts se carga aparte al abrir la primera ficha; no entra en el bundle de rutina.
+const ExerciseProgressChart = lazy(() => import('../exercise/ExerciseProgressChart'))
 
 interface Props {
   item: RoutineItem | null
@@ -36,6 +41,8 @@ export function ExerciseSheet({ item, onClose, onChanged }: Props) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<SetLog[]>([])
+  const [dayLogs, setDayLogs] = useState<PesoFecha[]>([])
+  const [cargandoHist, setCargandoHist] = useState(false)
 
   useEffect(() => {
     if (!item) return
@@ -49,14 +56,27 @@ export function ExerciseSheet({ item, onClose, onChanged }: Props) {
     setDescanso(String(item.descanso_seg))
     setNotas(item.notas ?? '')
     setError(null)
-    void supabase
-      .from('set_logs')
-      .select('*')
-      .eq('exercise_id', item.exercise_id)
-      .order('fecha', { ascending: false })
-      .order('serie', { ascending: true })
-      .limit(24)
-      .then(({ data }) => setHistory((data as SetLog[]) ?? []))
+    // Histórico completo del ejercicio para la gráfica de progresión
+    setCargandoHist(true)
+    setHistory([])
+    setDayLogs([])
+    void (async () => {
+      const [sl, edl] = await Promise.all([
+        supabase
+          .from('set_logs')
+          .select('*')
+          .eq('exercise_id', item.exercise_id)
+          .order('fecha', { ascending: true })
+          .order('serie', { ascending: true }),
+        supabase
+          .from('exercise_day_logs')
+          .select('exercise_id, fecha, peso')
+          .eq('exercise_id', item.exercise_id),
+      ])
+      setHistory((sl.data as SetLog[]) ?? [])
+      setDayLogs((edl.data as PesoFecha[]) ?? [])
+      setCargandoHist(false)
+    })()
   }, [item])
 
   if (!item) return null
@@ -138,13 +158,6 @@ export function ExerciseSheet({ item, onClose, onChanged }: Props) {
     onChanged()
     onClose()
   }
-
-  // Historial agrupado por fecha: nº de series y peso máximo
-  const historyByDate = [...new Set(history.map((h) => h.fecha))].slice(0, 5).map((f) => {
-    const sets = history.filter((h) => h.fecha === f)
-    const pesos = sets.map((s) => s.peso_usado).filter((p): p is number => p != null)
-    return { fecha: f, series: sets.length, peso: pesos.length ? Math.max(...pesos) : null }
-  })
 
   return (
     <Modal open onClose={onClose} title={item.exercise.nombre}>
@@ -255,28 +268,21 @@ export function ExerciseSheet({ item, onClose, onChanged }: Props) {
           </div>
         </details>
 
-        {/* Historial de cargas */}
-        {historyByDate.length > 0 && (
-          <div className="rounded-xl border border-ink-border bg-ink-card px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Últimas sesiones
-            </p>
-            <ul className="mt-2 flex flex-col gap-1.5">
-              {historyByDate.map((h) => (
-                <li key={h.fecha} className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-400">
-                    {new Date(`${h.fecha}T12:00:00`).toLocaleDateString('es-ES', {
-                      day: 'numeric',
-                      month: 'short',
-                    })}
-                  </span>
-                  <span className="font-display font-medium text-zinc-200">
-                    {h.series} series{h.peso != null ? ` · ${h.peso} kg` : ''}
-                  </span>
-                </li>
-              ))}
-            </ul>
+        {/* Gráfica de progresión (Recharts cargado lazy) */}
+        {cargandoHist ? (
+          <div className="flex justify-center rounded-xl border border-ink-border bg-ink-card py-8">
+            <Spinner />
           </div>
+        ) : (
+          <Suspense
+            fallback={
+              <div className="flex justify-center rounded-xl border border-ink-border bg-ink-card py-8">
+                <Spinner />
+              </div>
+            }
+          >
+            <ExerciseProgressChart setLogs={history} dayLogs={dayLogs} />
+          </Suspense>
         )}
 
         {error && (
