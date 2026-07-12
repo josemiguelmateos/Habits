@@ -26,6 +26,7 @@ import { Leaderboard } from '../components/social/Leaderboard'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
+import ExerciseProgressChart from '../components/exercise/ExerciseProgressChart'
 
 const ACCENT = '#a3e635'
 const GRID = '#2a2a32'
@@ -176,8 +177,6 @@ export function DashboardPage() {
     }
     return arr
   }, [byFecha, today])
-
-  const seriePeso = ejercicioSel ? (pesoPorEjercicio.get(ejercicioSel) ?? []) : []
 
   const nivel = useMemo(
     () =>
@@ -598,19 +597,12 @@ export function DashboardPage() {
                 </option>
               ))}
             </select>
-            <div className="mt-3 h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={seriePeso.map((p) => ({ ...p, dia: p.fecha.slice(5) }))}
-                  margin={{ top: 8, right: 4, left: -18, bottom: 0 }}
-                >
-                  <CartesianGrid stroke={GRID} strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="dia" tick={{ fill: MUTED, fontSize: 10 }} tickLine={false} axisLine={{ stroke: GRID }} />
-                  <YAxis tick={{ fill: MUTED, fontSize: 10 }} tickLine={false} axisLine={false} unit="kg" domain={['dataMin - 2', 'dataMax + 2']} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} kg`, 'peso']} />
-                  <Line type="monotone" dataKey="kg" stroke={ACCENT} strokeWidth={2} dot={{ r: 3, fill: ACCENT }} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="mt-3">
+              <ExerciseProgressChart
+                bare
+                setLogs={setRows.filter((r) => r.exercise_id === ejercicioSel)}
+                dayLogs={edlRows.filter((r) => r.exercise_id === ejercicioSel)}
+              />
             </div>
           </>
         )}
