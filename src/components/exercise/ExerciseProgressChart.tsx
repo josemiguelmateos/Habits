@@ -42,6 +42,7 @@ interface ChartRow {
 interface Props {
   setLogs: SetLike[]
   dayLogs: PesoFecha[]
+  bare?: boolean
 }
 
 function formatoFecha(fecha: string): string {
@@ -51,7 +52,7 @@ function formatoFecha(fecha: string): string {
   })
 }
 
-export default function ExerciseProgressChart({ setLogs, dayLogs }: Props) {
+export default function ExerciseProgressChart({ setLogs, dayLogs, bare = false }: Props) {
   const [metrica, setMetrica] = useState<Metrica>('oneRM')
 
   const serie = useMemo(() => buildProgressSeries(setLogs, dayLogs), [setLogs, dayLogs])
@@ -74,7 +75,13 @@ export default function ExerciseProgressChart({ setLogs, dayLogs }: Props) {
   // Sin ninguna sesión registrada
   if (serie.length === 0) {
     return (
-      <div className="rounded-xl border border-ink-border bg-ink-card px-4 py-6 text-center">
+      <div
+        className={
+          bare
+            ? 'py-2 text-center'
+            : 'rounded-xl border border-ink-border bg-ink-card px-4 py-6 text-center'
+        }
+      >
         <p className="text-sm leading-relaxed text-zinc-500">
           Registra series en el modo entrenamiento y aquí verás tu progresión.
         </p>
@@ -83,11 +90,13 @@ export default function ExerciseProgressChart({ setLogs, dayLogs }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-ink-border bg-ink-card px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Progresión
-        </p>
+    <div className={bare ? '' : 'rounded-xl border border-ink-border bg-ink-card px-4 py-3'}>
+      <div className={`flex items-center gap-2 ${bare ? 'justify-end' : 'justify-between'}`}>
+        {!bare && (
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Progresión
+          </p>
+        )}
         <div className="flex gap-1">
           {METRICAS.map((m) => (
             <button
