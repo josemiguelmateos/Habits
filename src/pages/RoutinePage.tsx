@@ -75,6 +75,24 @@ export function RoutinePage() {
     await rutina.reload()
   }
 
+  const resetear = async () => {
+    if (!user) return
+    if (
+      !confirm(
+        '¿Borrar tu rutina e importar otra? Se borrarán los ejercicios, días y cardio (y el historial de cargas asociado).',
+      )
+    )
+      return
+    // Borrar exercises arrastra en cascada routine_day_exercises, set_logs y
+    // exercise_day_logs; routine_days y cardio_sessions van aparte.
+    await supabase.from('routine_days').delete().eq('user_id', user.id)
+    await supabase.from('cardio_sessions').delete().eq('user_id', user.id)
+    await supabase.from('exercises').delete().eq('user_id', user.id)
+    localStorage.removeItem(BLANK_KEY)
+    setEnBlanco(false)
+    await rutina.reload()
+  }
+
   if (rutina.loading) {
     return (
       <div className="flex flex-col gap-4">
@@ -239,6 +257,16 @@ export function RoutinePage() {
           />
         )
       })}
+
+      {!sinRutina && (
+        <button
+          type="button"
+          onClick={() => void resetear()}
+          className="mx-auto mt-1 text-xs font-semibold text-zinc-600 hover:text-accent"
+        >
+          Borrar rutina e importar otra
+        </button>
+      )}
 
       <ExerciseSheet
         item={abiertoActual}
