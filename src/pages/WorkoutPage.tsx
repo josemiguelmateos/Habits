@@ -14,6 +14,9 @@ import { Celebration } from '../components/workout/Celebration'
 import { PrToast, type PrEvent } from '../components/workout/PrToast'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
+import { sparklineSeries } from '../lib/sparkline'
+import type { SetLike, PesoFecha } from '../lib/stats'
+import { Sparkline } from '../components/exercise/Sparkline'
 
 interface TimerState {
   seconds: number
@@ -44,13 +47,19 @@ export function WorkoutPage() {
   const [histMax, setHistMax] = useState<Map<string, number>>(new Map())
   const [prs, setPrs] = useState<PrEvent[]>([])
   const [prToast, setPrToast] = useState<PrEvent | null>(null)
+  const [sparks, setSparks] = useState<
+    Map<string, { values: number[]; metrica: 'oneRM' | 'pesoMax' }>
+  >(new Map())
 
   useEffect(() => {
     if (!user) return
     void (async () => {
       const hoyStr = localDateStr()
       const [sl, edl] = await Promise.all([
-        supabase.from('set_logs').select('exercise_id, fecha, peso_usado').lt('fecha', hoyStr),
+        supabase
+          .from('set_logs')
+          .select('exercise_id, fecha, reps_hechas, peso_usado')
+          .lt('fecha', hoyStr),
         supabase.from('exercise_day_logs').select('exercise_id, fecha, peso').lt('fecha', hoyStr),
       ])
       const registros = [
@@ -66,6 +75,24 @@ export function WorkoutPage() {
         })),
       ]
       setHistMax(new Map([...maxPorEjercicio(registros)].map(([k, v]) => [k, v.peso])))
+
+      const setsByEx = new Map<string, SetLike[]>()
+      for (const r of (sl.data ?? []) as SetLike[]) {
+        const a = setsByEx.get(r.exercise_id) ?? []
+        a.push(r)
+        setsByEx.set(r.exercise_id, a)
+      }
+      const daysByEx = new Map<string, PesoFecha[]>()
+      for (const r of (edl.data ?? []) as PesoFecha[]) {
+        const a = daysByEx.get(r.exercise_id) ?? []
+        a.push(r)
+        daysByEx.set(r.exercise_id, a)
+      }
+      const sparkMap = new Map<string, { values: number[]; metrica: 'oneRM' | 'pesoMax' }>()
+      for (const id of new Set([...setsByEx.keys(), ...daysByEx.keys()])) {
+        sparkMap.set(id, sparklineSeries(setsByEx.get(id) ?? [], daysByEx.get(id) ?? []))
+      }
+      setSparks(sparkMap)
     })()
   }, [user])
 
@@ -271,6 +298,19 @@ export function WorkoutPage() {
               {item.peso != null ? ` · ${item.peso} kg` : ''} · descanso{' '}
               {item.descanso_seg}&Prime;
             </p>
+            {(() => {
+              const s = sparks.get(item.exercise_id)
+              if (!s || s.values.length < 2) return null
+              return (
+                <div className="mt-2 flex items-center gap-2">
+                  <Sparkline values={s.values} width={110} height={30} />
+                  <span className="text-xs text-zinc-500">
+                    {s.metrica === 'oneRM' ? '1RM' : 'Peso'} ·{' '}
+                    {s.values[s.values.length - 1]} kg
+                  </span>
+                </div>
+              )
+            })()}
 
             <div className="mt-4">
               <ExerciseMedia
