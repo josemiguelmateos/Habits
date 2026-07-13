@@ -37,7 +37,7 @@ export const PROMPT_DIETA = `Eres un conversor. Recibes una dieta semanal (texto
   "kcal": 2500,
   "notas": "notas generales si las hay",
   "comidas": [
-    { "dias": [1], "slot": "Comida", "orden": 1, "descripcion": "menú concreto de ese día",
+    { "dias": [1], "slot": "Comida", "orden": 1, "semana": 1, "descripcion": "menú concreto de ese día",
       "items": [ { "nombre": "Arroz", "categoria": "Hidratos", "cantidad": 250, "unidad": "g" } ] }
   ]
 }
@@ -49,6 +49,7 @@ Reglas del esquema:
 - "descripcion": el menú concreto de esa comida (ver la regla de opciones).
 - "items": desglosa cada ingrediente con su cantidad y unidad ("g","ml","ud","pieza","lata","rebanada","L"); si un ingrediente no lleva cantidad (p. ej. "verdura al gusto"), pon "cantidad": null y "unidad": null. Con esto se calcula la lista de la compra.
 - "categoria" de cada item debe ser EXACTAMENTE una de: "Proteínas", "Hidratos", "Fruta y verdura", "Huevos y lácteos", "Otros".
+- "semana" (opcional): número de semana del ciclo (1, 2, 3…) para las comidas que ROTAN entre semanas. Omítela (o null) en las comidas fijas que se repiten todas las semanas.
 
 REGLA CLAVE — comidas con opciones o "escoge 1":
 Muchas dietas no fijan un menú por día, sino que dan opciones a elegir ("Proteína (escoge 1): pollo / pescado / tofu…", "Carbohidratos: patata o arroz", listas separadas por "/" o "o"). En esos casos NO repitas todas las opciones en todos los días. Debes ELEGIR TÚ una opción concreta para cada día y REPARTIR las opciones a lo largo de la semana para dar variedad:
@@ -58,5 +59,11 @@ Muchas dietas no fijan un menú por día, sino que dan opciones a elegir ("Prote
 - Los "items" son los ingredientes concretos de la elección de ese día, con cantidad y unidad. Si una opción da un rango (150-200 g), usa un valor representativo (p. ej. 175 g).
 - Las comidas fijas (menú único, sin opciones) se mantienen tal cual, agrupando sus días en "dias".
 - Las comidas marcadas como OPCIONAL ("solo si hay hambre") inclúyelas e indícalo en la descripción.
+
+ROTACIÓN SEMANAL (además de la variedad diaria):
+- Si hay opciones suficientes, genera entre 2 y 4 SEMANAS distintas y reparte las opciones entre ellas, de modo que cada semana use elecciones diferentes (no la misma dieta cada semana). Marca cada comida que rote con "semana": 1, 2, 3… según la semana del ciclo a la que pertenece.
+- Las comidas fijas (menú único, sin opciones) van SIN "semana" (valen para todas las semanas): no las repitas en cada semana.
+- Si la dieta no tiene opciones, no uses "semana" en ninguna comida (una sola semana).
+- Mantén además la variedad día a día dentro de cada semana, como ya se indica arriba.
 
 Extrae lo que hay en el documento; no inventes alimentos que no aparezcan. Si el documento trae su propia lista de la compra, IGNÓRALA: la app la recalcula sola desde los items. El objetivo final es que CADA día muestre un plan de comidas concreto y variado, nunca el mismo texto repetido en todos los días.`
