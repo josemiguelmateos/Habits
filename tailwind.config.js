@@ -54,12 +54,17 @@ export default {
           '60%': { opacity: '1' },
           '100%': { transform: 'scale(1)', opacity: '0.7' },
         },
+        confeti: {
+          '0%': { transform: 'translateY(-10vh) rotate(0deg)', opacity: '1' },
+          '100%': { transform: 'translateY(110vh) rotate(720deg)', opacity: '0' },
+        },
       },
       animation: {
         'fade-up': 'fade-up 0.35s ease-out both',
         'draw-circle': 'draw-circle 0.7s ease-out both',
         'draw-check': 'draw-check 0.45s ease-out 0.55s both',
         halo: 'halo 1.2s ease-out both',
+        confeti: 'confeti 2.8s linear forwards',
       },
     },
   },
