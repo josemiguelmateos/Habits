@@ -13,6 +13,7 @@ export interface JsonMeal {
   slot: string
   orden?: number
   descripcion: string
+  semana?: number | null
   items?: JsonMealItem[]
 }
 
@@ -85,11 +86,23 @@ export function validateDietaJson(
         })
       }
     }
+    let semana: number | null = null
+    if (m.semana != null && m.semana !== '') {
+      const s = Number(m.semana)
+      if (!Number.isInteger(s) || s < 1) {
+        return {
+          ok: false,
+          error: `Comida nº${i + 1}: "semana" debe ser un entero ≥ 1 (o quítala si es fija).`,
+        }
+      }
+      semana = s
+    }
     comidas.push({
       dias,
       slot: m.slot.trim(),
       orden: Number(m.orden) || i + 1,
       descripcion: m.descripcion.trim(),
+      semana,
       items,
     })
   }
@@ -125,6 +138,7 @@ export async function importDietData(userId: string, data: DietaJson): Promise<v
     slot: c.slot,
     orden: c.orden ?? 0,
     descripcion: c.descripcion,
+    semana: c.semana ?? null,
   }))
   const { data: inserted, error: mealErr } = await supabase
     .from('diet_meals')
