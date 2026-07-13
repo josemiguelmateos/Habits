@@ -32,7 +32,7 @@ export function WorkoutPage() {
   const [idx, setIdx] = useState(0)
   const [hechas, setHechas] = useState<Record<string, boolean[]>>({})
   const [pesos, setPesos] = useState<Record<string, string>>({})
-  const [repsHechas, setRepsHechas] = useState<Record<string, string>>({})
+  const [repsPorSerie, setRepsPorSerie] = useState<Record<string, string[]>>({})
   const [timer, setTimer] = useState<TimerState | null>(null)
   const [cardioHecho, setCardioHecho] = useState(false)
   const [terminando, setTerminando] = useState(false)
@@ -133,26 +133,36 @@ export function WorkoutPage() {
     )
   }
 
-  // Reps reales del campo "Reps de hoy" (por defecto, el primer número del objetivo)
-  const repsDe = (it: RoutineItem): number => {
-    const raw = (repsHechas[it.id] ?? '').trim()
+  // Reps reales por serie (por defecto, el primer número del objetivo)
+  const repsDeSerie = (it: RoutineItem, serie: number): number => {
+    const raw = (repsPorSerie[it.id]?.[serie] ?? '').trim()
     const n = raw === '' ? parseInt(it.reps, 10) : parseInt(raw, 10)
     return Number.isNaN(n) ? 0 : n
+  }
+
+  const setRepsSerie = (itemId: string, serie: number, valor: string) => {
+    setRepsPorSerie((prev) => {
+      const arr = prev[itemId] ? [...prev[itemId]] : []
+      arr[serie] = valor
+      return { ...prev, [itemId]: arr }
+    })
   }
 
   const totalSeries = items.reduce((acc, it) => acc + it.series, 0)
   const seriesHechas = Object.values(hechas).flat().filter(Boolean).length
   const volumenSesion = Math.round(
     items.reduce((acc, it) => {
-      const checks = (hechas[it.id] ?? []).filter(Boolean).length
-      if (!checks) return acc
+      const done = hechas[it.id] ?? []
       const pesoStr = (pesos[it.id] ?? (it.peso != null ? String(it.peso) : ''))
         .trim()
         .replace(',', '.')
       const p = parseFloat(pesoStr)
-      const reps = repsDe(it)
-      if (Number.isNaN(p) || !reps) return acc
-      return acc + checks * p * reps
+      if (Number.isNaN(p)) return acc
+      let sub = 0
+      for (let s = 0; s < it.series; s++) {
+        if (done[s]) sub += p * repsDeSerie(it, s)
+      }
+      return acc + sub
     }, 0),
   )
   const enCardio = idx >= items.length && cardioHoy.length > 0
@@ -192,7 +202,7 @@ export function WorkoutPage() {
           exercise_id: it.exercise_id,
           fecha: localDateStr(),
           serie: serie + 1,
-          reps_hechas: repsDe(it) || null,
+          reps_hechas: repsDeSerie(it, serie) || null,
           peso_usado: peso != null && !Number.isNaN(peso) ? peso : null,
         })
         .then(({ error }) => {
@@ -337,39 +347,22 @@ export function WorkoutPage() {
               )}
             </div>
 
-            {/* Peso y reps de hoy (reales; se aplican a todas las series) */}
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-zinc-400" htmlFor="peso-hoy">
-                  Peso de hoy
-                </label>
-                <input
-                  id="peso-hoy"
-                  type="text"
-                  inputMode="decimal"
-                  placeholder={item.peso != null ? String(item.peso) : 'kg'}
-                  value={pesos[item.id] ?? ''}
-                  onChange={(e) => setPesos((p) => ({ ...p, [item.id]: e.target.value }))}
-                  onBlur={() => void guardarPeso(item)}
-                  className="w-24 rounded-xl border border-ink-border bg-ink-soft px-3 py-2.5 text-center font-display text-lg font-semibold text-zinc-100 outline-none focus:border-accent"
-                />
-                <span className="text-sm text-zinc-500">kg</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-zinc-400" htmlFor="reps-hoy">
-                  Reps de hoy
-                </label>
-                <input
-                  id="reps-hoy"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder={String(parseInt(item.reps, 10) || '')}
-                  value={repsHechas[item.id] ?? ''}
-                  onChange={(e) => setRepsHechas((r) => ({ ...r, [item.id]: e.target.value }))}
-                  className="w-20 rounded-xl border border-ink-border bg-ink-soft px-3 py-2.5 text-center font-display text-lg font-semibold text-zinc-100 outline-none focus:border-accent"
-                />
-                <span className="text-sm text-zinc-500">reps</span>
-              </div>
+            {/* Peso de hoy (global para el ejercicio; las reps van por serie) */}
+            <div className="mt-5 flex items-center gap-3">
+              <label className="text-sm font-medium text-zinc-400" htmlFor="peso-hoy">
+                Peso de hoy
+              </label>
+              <input
+                id="peso-hoy"
+                type="text"
+                inputMode="decimal"
+                placeholder={item.peso != null ? String(item.peso) : 'kg'}
+                value={pesos[item.id] ?? ''}
+                onChange={(e) => setPesos((p) => ({ ...p, [item.id]: e.target.value }))}
+                onBlur={() => void guardarPeso(item)}
+                className="w-24 rounded-xl border border-ink-border bg-ink-soft px-3 py-2.5 text-center font-display text-lg font-semibold text-zinc-100 outline-none focus:border-accent"
+              />
+              <span className="text-sm text-zinc-500">kg</span>
             </div>
 
             {/* Series */}
@@ -377,22 +370,40 @@ export function WorkoutPage() {
               {Array.from({ length: item.series }).map((_, s) => {
                 const hecha = hechas[item.id]?.[s] ?? false
                 return (
-                  <button
+                  <div
                     key={s}
-                    type="button"
-                    onClick={() => marcarSerie(item, s, !hecha)}
-                    aria-pressed={hecha}
-                    className={`flex min-h-14 items-center justify-between rounded-xl border px-4 transition-all active:scale-[0.98] ${
+                    className={`flex min-h-14 items-center gap-1.5 rounded-xl border pl-4 pr-2 transition-all ${
                       hecha
-                        ? 'border-accent bg-accent/15 text-accent'
-                        : 'border-ink-border bg-ink-card text-zinc-300'
+                        ? 'border-accent bg-accent/15'
+                        : 'border-ink-border bg-ink-card'
                     }`}
                   >
-                    <span className="font-display text-sm font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => marcarSerie(item, s, !hecha)}
+                      aria-pressed={hecha}
+                      className={`flex-1 self-stretch text-left font-display text-sm font-semibold ${
+                        hecha ? 'text-accent' : 'text-zinc-300'
+                      }`}
+                    >
                       Serie {s + 1}
-                    </span>
-                    <span className="flex items-center gap-2 text-sm">
-                      {item.reps}
+                    </button>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      aria-label={`Reps de la serie ${s + 1}`}
+                      value={repsPorSerie[item.id]?.[s] ?? String(parseInt(item.reps, 10) || '')}
+                      onChange={(e) => setRepsSerie(item.id, s, e.target.value)}
+                      className={`w-11 rounded-lg border bg-ink-soft py-1.5 text-center font-display text-sm font-semibold outline-none focus:border-accent ${
+                        hecha ? 'border-accent/40 text-accent' : 'border-ink-border text-zinc-100'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => marcarSerie(item, s, !hecha)}
+                      aria-label={hecha ? `Desmarcar serie ${s + 1}` : `Marcar serie ${s + 1}`}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center active:scale-90"
+                    >
                       <span
                         className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
                           hecha ? 'border-accent bg-accent text-accent-ink' : 'border-zinc-600'
@@ -404,8 +415,8 @@ export function WorkoutPage() {
                           </svg>
                         )}
                       </span>
-                    </span>
-                  </button>
+                    </button>
+                  </div>
                 )
               })}
             </div>
