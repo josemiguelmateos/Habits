@@ -17,6 +17,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { sparklineSeries } from '../lib/sparkline'
 import type { SetLike, PesoFecha } from '../lib/stats'
 import { Sparkline } from '../components/exercise/Sparkline'
+import { loadDraft, saveDraft, pruneOldDrafts } from '../lib/workoutDraft'
 
 interface TimerState {
   seconds: number
@@ -30,9 +31,15 @@ export function WorkoutPage() {
   const fotoRef = useRef<HTMLInputElement>(null)
 
   const [idx, setIdx] = useState(0)
-  const [hechas, setHechas] = useState<Record<string, boolean[]>>({})
-  const [pesos, setPesos] = useState<Record<string, string>>({})
-  const [repsPorSerie, setRepsPorSerie] = useState<Record<string, string[]>>({})
+  const [hechas, setHechas] = useState<Record<string, boolean[]>>(
+    () => (user ? loadDraft(user.id, localDateStr()) : null)?.hechas ?? {},
+  )
+  const [pesos, setPesos] = useState<Record<string, string>>(
+    () => (user ? loadDraft(user.id, localDateStr()) : null)?.pesos ?? {},
+  )
+  const [repsPorSerie, setRepsPorSerie] = useState<Record<string, string[]>>(
+    () => (user ? loadDraft(user.id, localDateStr()) : null)?.repsPorSerie ?? {},
+  )
   const [timer, setTimer] = useState<TimerState | null>(null)
   const [cardioHecho, setCardioHecho] = useState(false)
   const [terminando, setTerminando] = useState(false)
@@ -95,6 +102,18 @@ export function WorkoutPage() {
       setSparks(sparkMap)
     })()
   }, [user])
+
+  // Limpia borradores de días anteriores de este usuario.
+  useEffect(() => {
+    if (!user) return
+    pruneOldDrafts(user.id, localDateStr())
+  }, [user])
+
+  // Guarda el progreso del día en cada cambio (restaura al volver a entrar).
+  useEffect(() => {
+    if (!user) return
+    saveDraft(user.id, localDateStr(), { hechas, pesos, repsPorSerie })
+  }, [user, hechas, pesos, repsPorSerie])
 
   const day = rutina.days.find((d) => d.weekday === hoy) ?? null
   const items = useMemo(
@@ -207,6 +226,20 @@ export function WorkoutPage() {
         })
         .then(({ error }) => {
           if (error) console.error('set_log:', error.message)
+        })
+    } else {
+      // Al desmarcar, retira la serie de set_logs para no ensuciar el historial.
+      supabase
+        .from('set_logs')
+        .delete()
+        .match({
+          user_id: user!.id,
+          exercise_id: it.exercise_id,
+          fecha: localDateStr(),
+          serie: serie + 1,
+        })
+        .then(({ error }) => {
+          if (error) console.error('set_log del:', error.message)
         })
     }
   }
