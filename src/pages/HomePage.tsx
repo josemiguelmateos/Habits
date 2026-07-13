@@ -75,6 +75,7 @@ export function HomePage() {
     rutina.days.length > 0 || rutina.exercises.length > 0 || rutina.cardio.length > 0
 
   const puntos = dailyPoints(dia.log)
+  const entrenoCompletado = Boolean(dia.log?.exercise_done)
   const nivel = levelFromXp(
     todos.logs.reduce((acc, l) => acc + dailyPoints(l).points, 0),
   )
@@ -143,7 +144,11 @@ export function HomePage() {
           >
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Hoy toca
+                {entrenoCompletado ? (
+                  <span className="text-accent">Completado</span>
+                ) : (
+                  'Hoy toca'
+                )}
               </p>
               <p className="mt-1 font-display text-xl font-bold">
                 {dayHoy?.titulo ?? 'Cardio'}
@@ -157,10 +162,20 @@ export function HomePage() {
                   .join(' + ')}
               </p>
             </div>
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink transition-transform group-active:scale-95">
-              <svg viewBox="0 0 24 24" className="ml-0.5 h-6 w-6" fill="currentColor">
-                <path d="M8 5.5v13l11-6.5z" />
-              </svg>
+            <span
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-transform group-active:scale-95 ${
+                entrenoCompletado ? 'bg-accent/15 text-accent' : 'bg-accent text-accent-ink'
+              }`}
+            >
+              {entrenoCompletado ? (
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="ml-0.5 h-6 w-6" fill="currentColor">
+                  <path d="M8 5.5v13l11-6.5z" />
+                </svg>
+              )}
             </span>
           </Link>
         ) : !tieneRutina ? (
