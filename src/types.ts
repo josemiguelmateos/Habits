@@ -73,6 +73,7 @@ export interface DietMeal {
   slot: string
   orden: number
   descripcion: string
+  semana: number | null
 }
 
 export interface DietMealItem {
