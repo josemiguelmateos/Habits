@@ -15,6 +15,8 @@ import { syncMemberStats } from '../lib/social'
 import { useAllLogs } from '../hooks/useAllLogs'
 import { HydrationRing } from '../components/home/HydrationRing'
 import { HabitToggle } from '../components/HabitToggle'
+import { PerfectDayCelebration } from '../components/home/PerfectDayCelebration'
+import { celebracionHecha, marcarCelebracion } from '../lib/perfectCelebration'
 
 const HABITOS = [
   { key: 'exercise_done', label: 'Ejercicio' },
@@ -36,6 +38,16 @@ export function HomePage() {
   const [amounts] = useState<[number, number]>(getWaterAmounts)
   const [sleepStr, setSleepStr] = useState('')
   const [ayerSinRegistrar, setAyerSinRegistrar] = useState(false)
+  const [celebrar, setCelebrar] = useState(false)
+
+  // Celebra el día perfecto (4 pilares) una vez al día.
+  useEffect(() => {
+    const hoyStr = localDateStr()
+    if (dailyPoints(dia.log).perfect && !celebracionHecha(hoyStr)) {
+      marcarCelebracion(hoyStr)
+      setCelebrar(true)
+    }
+  }, [dia.log])
 
   useEffect(() => {
     setSleepStr(dia.log?.sleep_hours != null ? String(dia.log.sleep_hours) : '')
@@ -277,6 +289,13 @@ export function HomePage() {
           <span className="text-sm text-zinc-500">h</span>
         </div>
       </div>
+
+      {celebrar && (
+        <PerfectDayCelebration
+          puntos={puntos.points}
+          onClose={() => setCelebrar(false)}
+        />
+      )}
     </div>
   )
 }
