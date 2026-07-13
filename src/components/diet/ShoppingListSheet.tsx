@@ -16,11 +16,12 @@ function cargarMarcados(): Set<string> {
 interface Props {
   open: boolean
   items: ItemConDias[]
+  semana?: number
   onClose: () => void
 }
 
 /** Lista de la compra: bruto total de la semana, agrupado y tachable. */
-export function ShoppingListSheet({ open, items, onClose }: Props) {
+export function ShoppingListSheet({ open, items, semana, onClose }: Props) {
   const grupos = useMemo(() => construirListaCompra(items), [items])
   const [marcados, setMarcados] = useState<Set<string>>(cargarMarcados)
 
@@ -51,7 +52,8 @@ export function ShoppingListSheet({ open, items, onClose }: Props) {
       <div className="flex flex-col gap-4 pb-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-zinc-500">
-            Bruto para toda la semana · {hechos}/{total}
+            Bruto para toda la semana{semana != null ? ` · Semana ${semana}` : ''} · {hechos}/
+            {total}
           </p>
           {hechos > 0 && (
             <button

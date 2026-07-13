@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDiet } from '../hooks/useDiet'
 import { importDietData, importInitialDiet, validateDietaJson } from '../lib/importDiet'
 import { supabase } from '../lib/supabase'
-import { isoWeekday, WEEKDAY_NAMES } from '../lib/days'
+import { isoWeekday, WEEKDAY_NAMES, semanaActiva } from '../lib/days'
 import type { DietMealFull } from '../types'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -30,6 +30,12 @@ export function DietPage() {
   const dieta = useDiet()
   const hoy = isoWeekday()
   const [diaSel, setDiaSel] = useState(hoy)
+  const [semanaSel, setSemanaSel] = useState(1)
+
+  // Al cargar (o cambiar el nº de semanas), sitúate en la semana que toca por calendario.
+  useEffect(() => {
+    setSemanaSel(semanaActiva(dieta.semanas))
+  }, [dieta.semanas])
   const [importando, setImportando] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [jsonAbierto, setJsonAbierto] = useState(false)
@@ -138,7 +144,7 @@ export function DietPage() {
     )
   }
 
-  const comidasDia = dieta.mealsForDay(diaSel)
+  const comidasDia = dieta.mealsForDay(diaSel, semanaSel)
 
   return (
     <div className="flex animate-fade-up flex-col gap-4">
@@ -162,6 +168,38 @@ export function DietPage() {
           Lista de la compra
         </Button>
       </div>
+
+      {/* Selector de semana (rotación) */}
+      {dieta.semanas >= 2 && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Semana
+          </span>
+          <div className="flex gap-1">
+            {Array.from({ length: dieta.semanas }, (_, i) => i + 1).map((w) => {
+              const activa = w === semanaActiva(dieta.semanas)
+              return (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setSemanaSel(w)}
+                  aria-pressed={semanaSel === w}
+                  className={`rounded-lg px-3 py-1.5 font-display text-xs font-semibold transition-colors ${
+                    semanaSel === w
+                      ? 'bg-accent text-accent-ink'
+                      : activa
+                        ? 'bg-ink-raised text-accent'
+                        : 'bg-ink-raised text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  {w}
+                </button>
+              )
+            })}
+          </div>
+          <span className="text-[11px] text-zinc-600">rota cada semana</span>
+        </div>
+      )}
 
       {/* Selector de día */}
       <div className="grid grid-cols-7 gap-1">
@@ -216,7 +254,8 @@ export function DietPage() {
 
       <ShoppingListSheet
         open={compraAbierta}
-        items={dieta.shoppingItems}
+        items={dieta.shoppingItemsForWeek(semanaSel)}
+        semana={dieta.semanas >= 2 ? semanaSel : undefined}
         onClose={() => setCompraAbierta(false)}
       />
     </div>
