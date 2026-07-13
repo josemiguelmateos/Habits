@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { semanaActiva } from '../lib/days'
 import type { DietMeal, DietMealFull, DietMealItem, DietMeta } from '../types'
 import type { ItemConDias } from '../lib/shoppingList'
 
@@ -52,30 +53,51 @@ export function useDiet() {
     void load()
   }, [load])
 
-  const mealsForDay = useCallback(
-    (weekday: number) =>
-      meals
-        .filter((m) => m.dias.includes(weekday))
-        .sort((a, b) => a.orden - b.orden),
+  const semanas = useMemo(
+    () => Math.max(1, meals.reduce((n, m) => Math.max(n, m.semana ?? 0), 0)),
     [meals],
   )
 
-  /** Todos los items de la semana, cada uno con los días de su comida. */
-  const shoppingItems = useMemo<ItemConDias[]>(
-    () =>
-      meals.flatMap((m) =>
-        m.items.map((it) => ({
-          nombre: it.nombre,
-          categoria: it.categoria,
-          cantidad: it.cantidad,
-          unidad: it.unidad,
-          dias: m.dias,
-        })),
-      ),
-    [meals],
+  const mealsForDay = useCallback(
+    (weekday: number, semana?: number) => {
+      const sem = semana ?? semanaActiva(semanas)
+      return meals
+        .filter((m) => m.dias.includes(weekday) && (m.semana == null || m.semana === sem))
+        .sort((a, b) => a.orden - b.orden)
+    },
+    [meals, semanas],
+  )
+
+  /** Items de la compra de una semana (comidas fijas + las de esa semana). */
+  const shoppingItemsForWeek = useCallback(
+    (semana?: number): ItemConDias[] => {
+      const sem = semana ?? semanaActiva(semanas)
+      return meals
+        .filter((m) => m.semana == null || m.semana === sem)
+        .flatMap((m) =>
+          m.items.map((it) => ({
+            nombre: it.nombre,
+            categoria: it.categoria,
+            cantidad: it.cantidad,
+            unidad: it.unidad,
+            dias: m.dias,
+          })),
+        )
+    },
+    [meals, semanas],
   )
 
   const isEmpty = meals.length === 0
 
-  return { meals, meta, loading, missing, isEmpty, mealsForDay, shoppingItems, reload: load }
+  return {
+    meals,
+    meta,
+    loading,
+    missing,
+    isEmpty,
+    semanas,
+    mealsForDay,
+    shoppingItemsForWeek,
+    reload: load,
+  }
 }
