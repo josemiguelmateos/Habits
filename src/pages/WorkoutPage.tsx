@@ -463,10 +463,14 @@ export function WorkoutPage() {
                   type="button"
                   onClick={() => {
                     setPesos((p) => ({ ...p, [item.id]: String(reco.peso) }))
-                    void supabase
+                    // .then() imprescindible: el builder de supabase-js es lazy
+                    supabase
                       .from('routine_day_exercises')
                       .update({ peso: reco.peso })
                       .eq('id', item.id)
+                      .then(({ error }) => {
+                        if (error) console.error('aplicar peso:', error.message)
+                      })
                   }}
                   className={`shrink-0 rounded-lg px-3 py-1.5 font-display text-xs font-bold ${
                     reco.tipo === 'subir'
