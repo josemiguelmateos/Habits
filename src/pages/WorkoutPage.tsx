@@ -18,6 +18,13 @@ import { sparklineSeries } from '../lib/sparkline'
 import type { SetLike, PesoFecha } from '../lib/stats'
 import { Sparkline } from '../components/exercise/Sparkline'
 import { loadDraft, saveDraft, pruneOldDrafts } from '../lib/workoutDraft'
+import {
+  ultimaSesionPorEjercicio,
+  resumenUltimaSesion,
+  type SetConSerie,
+  type UltimaSesion,
+} from '../lib/lastSession'
+import { analizarProgresion, sesionesDesdeLogs } from '../lib/coach'
 
 interface TimerState {
   seconds: number
@@ -57,6 +64,8 @@ export function WorkoutPage() {
   const [sparks, setSparks] = useState<
     Map<string, { values: number[]; metrica: 'oneRM' | 'pesoMax' }>
   >(new Map())
+  const [ultimaPorEx, setUltimaPorEx] = useState<Map<string, UltimaSesion>>(new Map())
+  const [logsPorEx, setLogsPorEx] = useState<Map<string, SetConSerie[]>>(new Map())
 
   useEffect(() => {
     if (!user) return
@@ -65,7 +74,7 @@ export function WorkoutPage() {
       const [sl, edl] = await Promise.all([
         supabase
           .from('set_logs')
-          .select('exercise_id, fecha, reps_hechas, peso_usado')
+          .select('exercise_id, fecha, serie, reps_hechas, peso_usado')
           .lt('fecha', hoyStr),
         supabase.from('exercise_day_logs').select('exercise_id, fecha, peso').lt('fecha', hoyStr),
       ])
@@ -100,6 +109,16 @@ export function WorkoutPage() {
         sparkMap.set(id, sparklineSeries(setsByEx.get(id) ?? [], daysByEx.get(id) ?? []))
       }
       setSparks(sparkMap)
+
+      const conSerie = (sl.data ?? []) as SetConSerie[]
+      setUltimaPorEx(ultimaSesionPorEjercicio(conSerie))
+      const porEx = new Map<string, SetConSerie[]>()
+      for (const r of conSerie) {
+        const a = porEx.get(r.exercise_id) ?? []
+        a.push(r)
+        porEx.set(r.exercise_id, a)
+      }
+      setLogsPorEx(porEx)
     })()
   }, [user])
 
@@ -152,11 +171,38 @@ export function WorkoutPage() {
     )
   }
 
-  // Reps reales por serie (por defecto, el primer número del objetivo)
+  // Peso efectivo: lo escrito hoy → el de la última sesión → el del plan
+  const pesoEfectivoStr = (it: RoutineItem): string => {
+    const escrito = pesos[it.id]
+    if (escrito != null) return escrito
+    const ult = ultimaPorEx.get(it.exercise_id)?.peso
+    if (ult != null) return String(ult)
+    return it.peso != null ? String(it.peso) : ''
+  }
+
+  // Reps reales por serie: lo escrito hoy → la última sesión → el objetivo
   const repsDeSerie = (it: RoutineItem, serie: number): number => {
     const raw = (repsPorSerie[it.id]?.[serie] ?? '').trim()
-    const n = raw === '' ? parseInt(it.reps, 10) : parseInt(raw, 10)
+    if (raw !== '') {
+      const n = parseInt(raw, 10)
+      return Number.isNaN(n) ? 0 : n
+    }
+    const ult = ultimaPorEx.get(it.exercise_id)?.reps[serie]
+    if (ult != null) return ult
+    const n = parseInt(it.reps, 10)
     return Number.isNaN(n) ? 0 : n
+  }
+
+  // Color del input de reps al marcar: verde si superaste la última sesión, ámbar si quedaste corto.
+  const claseRepsSerie = (it: RoutineItem, s: number, hecha: boolean): string => {
+    if (!hecha) return 'border-ink-border text-zinc-100'
+    const ref = ultimaPorEx.get(it.exercise_id)?.reps[s]
+    if (ref != null) {
+      const hechasReps = repsDeSerie(it, s)
+      if (hechasReps > ref) return 'border-accent text-accent'
+      if (hechasReps < ref) return 'border-amber-500/60 text-amber-400'
+    }
+    return 'border-accent/40 text-accent'
   }
 
   const setRepsSerie = (itemId: string, serie: number, valor: string) => {
@@ -172,9 +218,7 @@ export function WorkoutPage() {
   const volumenSesion = Math.round(
     items.reduce((acc, it) => {
       const done = hechas[it.id] ?? []
-      const pesoStr = (pesos[it.id] ?? (it.peso != null ? String(it.peso) : ''))
-        .trim()
-        .replace(',', '.')
+      const pesoStr = pesoEfectivoStr(it).trim().replace(',', '.')
       const p = parseFloat(pesoStr)
       if (Number.isNaN(p)) return acc
       let sub = 0
@@ -187,6 +231,17 @@ export function WorkoutPage() {
   const enCardio = idx >= items.length && cardioHoy.length > 0
   const item: RoutineItem | undefined = items[idx]
 
+  const ultima = item ? ultimaPorEx.get(item.exercise_id) : undefined
+  const reco = item
+    ? analizarProgresion(
+        sesionesDesdeLogs(
+          logsPorEx.get(item.exercise_id) ?? [],
+          item.series,
+          parseInt(item.reps, 10) || 0,
+        ),
+      )
+    : null
+
   const marcarSerie = (it: RoutineItem, serie: number, valor: boolean) => {
     setHechas((prev) => {
       const arr = [...(prev[it.id] ?? Array<boolean>(it.series).fill(false))]
@@ -195,7 +250,7 @@ export function WorkoutPage() {
     })
     if (valor) {
       setTimer((t) => ({ seconds: it.descanso_seg, runKey: (t?.runKey ?? 0) + 1 }))
-      const pesoStr = (pesos[it.id] ?? (it.peso != null ? String(it.peso) : '')).trim()
+      const pesoStr = pesoEfectivoStr(it).trim()
       const peso = pesoStr === '' ? null : parseFloat(pesoStr.replace(',', '.'))
 
       // ¿Récord personal? Solo si ya había un máximo previo que superar
@@ -380,8 +435,52 @@ export function WorkoutPage() {
               )}
             </div>
 
+            {/* Referencia de la última sesión (fija, no cambia al editar) */}
+            {ultima && (
+              <p className="mt-5 text-xs text-zinc-500">
+                Última vez:{' '}
+                <span className="font-semibold text-zinc-300">
+                  {resumenUltimaSesion(ultima)}
+                </span>
+              </p>
+            )}
+
+            {/* Recomendación del coach (doble progresión) */}
+            {reco && pesoEfectivoStr(item).replace(',', '.') !== String(reco.peso) && (
+              <div
+                className={`mt-2 flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-sm ${
+                  reco.tipo === 'subir'
+                    ? 'border-accent/40 bg-accent/10 text-accent'
+                    : 'border-amber-500/40 bg-amber-500/10 text-amber-400'
+                }`}
+              >
+                <span className="font-medium">
+                  {reco.tipo === 'subir'
+                    ? `⚡ Sube a ${reco.peso} kg · 2 sesiones cumpliendo`
+                    : `↓ Baja a ${reco.peso} kg · ${reco.sesiones} sesiones sin cerrar las reps`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPesos((p) => ({ ...p, [item.id]: String(reco.peso) }))
+                    void supabase
+                      .from('routine_day_exercises')
+                      .update({ peso: reco.peso })
+                      .eq('id', item.id)
+                  }}
+                  className={`shrink-0 rounded-lg px-3 py-1.5 font-display text-xs font-bold ${
+                    reco.tipo === 'subir'
+                      ? 'bg-accent text-accent-ink'
+                      : 'bg-amber-500 text-ink'
+                  }`}
+                >
+                  Aplicar
+                </button>
+              </div>
+            )}
+
             {/* Peso de hoy (global para el ejercicio; las reps van por serie) */}
-            <div className="mt-5 flex items-center gap-3">
+            <div className={`${ultima ? 'mt-2' : 'mt-5'} flex items-center gap-3`}>
               <label className="text-sm font-medium text-zinc-400" htmlFor="peso-hoy">
                 Peso de hoy
               </label>
@@ -390,7 +489,7 @@ export function WorkoutPage() {
                 type="text"
                 inputMode="decimal"
                 placeholder={item.peso != null ? String(item.peso) : 'kg'}
-                value={pesos[item.id] ?? ''}
+                value={pesoEfectivoStr(item)}
                 onChange={(e) => setPesos((p) => ({ ...p, [item.id]: e.target.value }))}
                 onBlur={() => void guardarPeso(item)}
                 className="w-24 rounded-xl border border-ink-border bg-ink-soft px-3 py-2.5 text-center font-display text-lg font-semibold text-zinc-100 outline-none focus:border-accent"
@@ -425,11 +524,14 @@ export function WorkoutPage() {
                       type="text"
                       inputMode="numeric"
                       aria-label={`Reps de la serie ${s + 1}`}
-                      value={repsPorSerie[item.id]?.[s] ?? String(parseInt(item.reps, 10) || '')}
+                      value={
+                        repsPorSerie[item.id]?.[s] ??
+                        (ultima?.reps[s] != null
+                          ? String(ultima.reps[s])
+                          : String(parseInt(item.reps, 10) || ''))
+                      }
                       onChange={(e) => setRepsSerie(item.id, s, e.target.value)}
-                      className={`w-11 rounded-lg border bg-ink-soft py-1.5 text-center font-display text-sm font-semibold outline-none focus:border-accent ${
-                        hecha ? 'border-accent/40 text-accent' : 'border-ink-border text-zinc-100'
-                      }`}
+                      className={`w-11 rounded-lg border bg-ink-soft py-1.5 text-center font-display text-sm font-semibold outline-none focus:border-accent ${claseRepsSerie(item, s, hecha)}`}
                     />
                     <button
                       type="button"
