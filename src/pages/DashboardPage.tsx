@@ -17,8 +17,15 @@ import { addDays, completionPct, computeStreaks } from '../lib/streaks'
 import { dailyPoints } from '../lib/score'
 import { isoWeekday, localDateStr } from '../lib/days'
 import { levelFromXp } from '../lib/level'
-import { volumen, maxPorEjercicio, formatKg, type SetLike, type PesoFecha } from '../lib/stats'
-import { sugerenciaHabito, sugerenciaProgresion, sugerenciaSueno } from '../lib/coach'
+import { volumen, maxPorEjercicio, formatKg, type PesoFecha } from '../lib/stats'
+import {
+  analizarProgresion,
+  sesionesDesdeLogs,
+  sugerenciaHabito,
+  sugerenciaProgresion,
+  sugerenciaSueno,
+} from '../lib/coach'
+import { resumenesUltimasSesiones, type SetConSerie } from '../lib/lastSession'
 import { syncMemberStats } from '../lib/social'
 import { analisisGuardado, pedirAnalisisIA, type AnalisisIA } from '../lib/aiCoach'
 import { Heatmap } from '../components/dashboard/Heatmap'
@@ -64,23 +71,24 @@ export function DashboardPage() {
   const [ventana, setVentana] = useState<7 | 30 | 90>(30)
   const [ejercicios, setEjercicios] = useState<{ id: string; nombre: string }[]>([])
   const [ejercicioSel, setEjercicioSel] = useState<string>('')
-  const [pesoPorEjercicio, setPesoPorEjercicio] = useState<Map<string, PesoPunto[]>>(
-    new Map(),
-  )
-  const [setRows, setSetRows] = useState<SetLike[]>([])
+  const [setRows, setSetRows] = useState<SetConSerie[]>([])
   const [edlRows, setEdlRows] = useState<PesoFecha[]>([])
   const [exNames, setExNames] = useState<Map<string, string>>(new Map())
+  const [objetivoPorEx, setObjetivoPorEx] = useState<
+    Map<string, { series: number; reps: number }>
+  >(new Map())
 
   // Cargas: set_logs (máx por día) + exercise_day_logs, fusionados
   useEffect(() => {
     if (!user) return
     void (async () => {
-      const [ex, sl, edl] = await Promise.all([
+      const [ex, sl, edl, rde] = await Promise.all([
         supabase.from('exercises').select('id, nombre').order('nombre'),
-        supabase.from('set_logs').select('exercise_id, fecha, reps_hechas, peso_usado'),
+        supabase.from('set_logs').select('exercise_id, fecha, serie, reps_hechas, peso_usado'),
         supabase.from('exercise_day_logs').select('exercise_id, fecha, peso'),
+        supabase.from('routine_day_exercises').select('exercise_id, series, reps'),
       ])
-      const sets = (sl.data ?? []) as SetLike[]
+      const sets = (sl.data ?? []) as SetConSerie[]
       // edl.error (tabla sin crear) se ignora: simplemente no aporta puntos
       const diarios = ((edl.data ?? []) as { exercise_id: string; fecha: string; peso: number | null }[])
       setSetRows(sets)
@@ -88,6 +96,15 @@ export function DashboardPage() {
       setExNames(
         new Map(((ex.data ?? []) as { id: string; nombre: string }[]).map((e) => [e.id, e.nombre])),
       )
+      // Objetivo del plan por ejercicio (si está en varios días, gana el de más series)
+      const objetivos = new Map<string, { series: number; reps: number }>()
+      for (const r of (rde.data ?? []) as { exercise_id: string; series: number; reps: string }[]) {
+        const prev = objetivos.get(r.exercise_id)
+        if (!prev || r.series > prev.series) {
+          objetivos.set(r.exercise_id, { series: r.series, reps: parseInt(r.reps, 10) || 0 })
+        }
+      }
+      setObjetivoPorEx(objetivos)
 
       const mapa = new Map<string, Map<string, number>>()
       const add = (exId: string, fecha: string, kg: number | null) => {
@@ -111,7 +128,6 @@ export function DashboardPage() {
         series.has(e.id),
       )
       setEjercicios(conDatos)
-      setPesoPorEjercicio(series)
       setEjercicioSel((sel) => sel || (conDatos[0]?.id ?? ''))
     })()
   }, [user])
@@ -212,15 +228,23 @@ export function DashboardPage() {
       .slice(0, 8)
   }, [setRows, edlRows, exNames])
 
-  // Coach: sugerencias accionables a partir de tus datos
+  // Coach: sugerencias accionables a partir de tus datos (reps reales)
   const coach = useMemo(() => {
     const out: string[] = []
-    for (const [exId, serie] of pesoPorEjercicio) {
+    const porEx = new Map<string, SetConSerie[]>()
+    for (const r of setRows) {
+      const a = porEx.get(r.exercise_id) ?? []
+      a.push(r)
+      porEx.set(r.exercise_id, a)
+    }
+    for (const [exId, rows] of porEx) {
       if (out.length >= 2) break
-      const sesiones = [...serie]
-        .reverse()
-        .map((p) => ({ fecha: p.fecha, peso: p.kg, repsOk: true }))
-      const s = sugerenciaProgresion(exNames.get(exId) ?? 'Ejercicio', sesiones)
+      const obj = objetivoPorEx.get(exId)
+      if (!obj) continue
+      const s = sugerenciaProgresion(
+        exNames.get(exId) ?? 'Ejercicio',
+        sesionesDesdeLogs(rows, obj.series, obj.reps),
+      )
       if (s) out.push(s)
     }
     // Con menos de una semana de historial, los % aún no dicen nada
@@ -242,7 +266,7 @@ export function DashboardPage() {
     const su = sugerenciaSueno(horas, profile?.sleep_goal_hours ?? 7)
     if (su) out.push(su)
     return out.slice(0, 3)
-  }, [pesoPorEjercicio, exNames, doneSets, byFecha, profile, today])
+  }, [setRows, objetivoPorEx, exNames, doneSets, byFecha, profile, today])
 
   const generarIA = async () => {
     setIaBusy(true)
@@ -254,6 +278,33 @@ export function DashboardPage() {
       sumaAgua += l?.water_ml ?? 0
       if (l?.sleep_hours != null) horasSueno.push(l.sleep_hours)
     }
+    // Progresión por ejercicio (reps reales) para que la IA recomiende cargas
+    const porEx = new Map<string, SetConSerie[]>()
+    for (const r of setRows) {
+      const a = porEx.get(r.exercise_id) ?? []
+      a.push(r)
+      porEx.set(r.exercise_id, a)
+    }
+    const progresionEjercicios = [...porEx.entries()]
+      .map(([exId, rows]) => ({
+        exId,
+        rows,
+        ultima: rows.reduce((m, r) => (r.fecha > m ? r.fecha : m), ''),
+      }))
+      .sort((a, b) => (a.ultima > b.ultima ? -1 : 1))
+      .slice(0, 8)
+      .map(({ exId, rows }) => {
+        const obj = objetivoPorEx.get(exId)
+        const reco = obj
+          ? analizarProgresion(sesionesDesdeLogs(rows, obj.series, obj.reps))
+          : null
+        return {
+          nombre: exNames.get(exId) ?? '—',
+          ultimas_sesiones: resumenesUltimasSesiones(rows, 3),
+          sugerencia_regla: reco ? `${reco.tipo} a ${reco.peso} kg` : null,
+        }
+      })
+
     const resumen: Record<string, unknown> = {
       objetivo: profile?.objetivo ?? 'Hipertrofia',
       nivel: `${nivel.level} (${nivel.name})`,
@@ -272,6 +323,7 @@ export function DashboardPage() {
       objetivo_sueno_h: profile?.sleep_goal_hours,
       volumen_kg: vol,
       records_recientes: records.slice(0, 5).map((r) => `${r.nombre}: ${r.peso} kg (${r.fecha})`),
+      progresion_ejercicios: progresionEjercicios,
     }
     try {
       setIa(await pedirAnalisisIA(resumen))
